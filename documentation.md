@@ -1,13 +1,13 @@
 ### Wykorzystane narzędzia - Backend
 * Language: TypeScript, JavaScript
-* Framework: Hapi - z racji faktu, że większość działania backendu opiera się na interakcji z blockchainem bez udziału użytkownika, został wybrany framework Hapi, który zapewnia zarówno bezpieczne działanie oraz szybkość implementacji.  
+* Framework: Express.js
 * JavaScript runtime environment: Node.js
 * baza danych: PostgreSQL
 * ORM: Prisma 
 * Blockchain: XRP Ledger
 * Blockchain API: xrpl.js
 * CI/CD: GitHub Actions
-* Test-framework: Hapi-lab
+* Test-framework: Jest, Mocha/Chai
 * Linter: ESLint
 
 
