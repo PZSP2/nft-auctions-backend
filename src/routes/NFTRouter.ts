@@ -1,8 +1,8 @@
-import { Router, Response, Request } from "express"
-import NFTController from "../controller/NFTController"
-import NFTService from "../services/NFTService"
-import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter"
-import { PrismaClient } from "@prisma/client"
+import { Router } from 'express'
+import NFTController from '../controller/NFTController'
+import NFTService from '../services/NFTService'
+import XrpLedgerAdapter from '../ledger/XrpLedgerAdapter'
+import { PrismaClient } from '@prisma/client'
 
 export const NFTRouter = Router()
 

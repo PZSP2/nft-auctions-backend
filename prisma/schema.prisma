@@ -13,7 +13,7 @@ datasource db {
 model User {
   id                Int    @default(autoincrement()) @id
   email             String @unique
-  password          String 
+  password          String
   wallet_address    String?
   account_address   String?
   wallet_seed       String?
@@ -23,23 +23,23 @@ model User {
 
 model NFT {
   id                Int    @default(autoincrement()) @id
+  ledgerId          String?
   name              String
   uri               String
   description       String?
   issuer_id         Int
-  issuer            User   @relation(fields: [issuer_id], references: [id])            
+  issuer            User   @relation(fields: [issuer_id], references: [id])
   auctions          Auction[]
-  minted            Boolean @default(false)
 }
 
 model Auction {
   id                Int    @default(autoincrement()) @id
   nft_id            Int
   nft               NFT    @relation(fields: [nft_id], references: [id])
-  mminimal_price    Float
+  minimal_price     Float
   start_time        DateTime
   end_time          DateTime
-  bids              Bid[] 
+  bids              Bid[]
 }
 
 model Bid {
