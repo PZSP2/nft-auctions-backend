@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int    @default(autoincrement()) @id
+  email             String @unique
+  password          String
+  wallet_address    String?
+  account_address   String?
+  wallet_seed       String?
+  bid               Bid[]
+  nft               NFT[]
+}
+
+model NFT {
+  id                Int    @default(autoincrement()) @id
+  ledgerId          String?
+  name              String
+  uri               String
+  description       String?
+  issuer_id         Int
+  issuer            User   @relation(fields: [issuer_id], references: [id])
+  auctions          Auction[]
+}
+
+model Auction {
+  id                Int    @default(autoincrement()) @id
+  nft_id            Int
+  nft               NFT    @relation(fields: [nft_id], references: [id])
+  minimal_price     Float
+  start_time        DateTime
+  end_time          DateTime
+  bids              Bid[]
+}
+
+model Bid {
+  timestamp         DateTime @default(now())
+  auction_id        Int
+  auction           Auction  @relation(fields: [auction_id], references: [id])
+  bidder_id         Int
+  bidder            User     @relation(fields: [bidder_id], references: [id])
+  bid_price         Float
+  @@id([timestamp, bidder_id, auction_id])
+}

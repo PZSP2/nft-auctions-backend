@@ -1,0 +1,27 @@
+{
+  "name": "nft-auctions-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:PZSP2/nft-auctions-backend.git",
+  "author": "Wojciech Kołodziejak <wojtekk61@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/date-fns": "^2.6.0",
+    "@types/morgan": "^1.9.3",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "date-fns": "^2.29.3",
+    "eslint": "^8.29.0",
+    "morgan": "^1.10.0",
+    "prisma": "^4.7.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "@prisma/client": "4.7.1",
+    "@types/express": "^4.17.14",
+    "@types/node": "^18.11.10",
+    "express": "^4.18.2",
+    "xrpl": "^2.6.0"
+  }
+}

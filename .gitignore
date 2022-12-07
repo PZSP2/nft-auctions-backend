@@ -1,0 +1,6 @@
+node_modules
+dist
+.env
+.vscode
+prisma/migrations/*
+!prisma/migrations/migrations_lock.toml
