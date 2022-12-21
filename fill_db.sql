@@ -70,38 +70,43 @@ create table public._prisma_migrations (
 );
 
 
+INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('kate_aa@mail.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
+INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('john_b@mail.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
+INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test@mail.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
+INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('Adam@Studios.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
+INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('school@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
 
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email1@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email2@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email3@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email4@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email5@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
-INSERT INTO "User" (email, password, wallet_address, wallet_seed) VALUES ('test_email6@test.com', 'test_password', 'rLp1vjjiHVVRLgLPCcktrGHXLq8RJWWAmk', 'sEd7dpWW9APCTD62t6rrW7oE6KVfeqv');
+INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('Robot playing chess',  'QmV3WbGZDT9ZYbQk7pZk65vNpcrjr22fAgPvoqhQ5DYrfe', 'Digital drawing of Robot playing chess made by Anna from 2022 class', 1);
+INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('Robot playing chess',  'QmckcqdX1knwyEnTfuEbkW7KbPRusZJD8ETrSuTbZW3TZp', 'Little Mary made a drawing presenting our school', 3);
+INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('Abstract painting',  'QmQF333ic72cxLhsF5Qm9oqVDnEYdrNMbW4C3rZesF46Hi', 'Abstract oil painting made by Adam class 2021', 2);
+INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('Robot playing chess',  'QmNMuf2H75xkDBWzREURqJNNqhB4gLRGMsNKMtddJe8ujk', 'Digital drawing of computer made by Tom from 2022 class', 1);
+INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('Robot art',  'QmWDvMxGXoreLSKzbN2gdNm5nF2ZP9n7rGtNquMGEgXdQ8', 'Robot digital art', 1);
 
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft', 'ipfs://uri', 'test_description', 1);
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft1', 'ipfs://uri', 'test_description', 1);
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft2', 'ipfs://uri', 'test_description', 1);
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft3', 'ipfs://uri', 'test_description', 1);
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft4', 'ipfs://uri', 'test_description', 1);
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft5', 'ipfs://uri', 'test_description', 4);
-INSERT INTO "NFT" (name, uri, description, issuer_id) VALUES ('test_nft6', 'ipfs://uri', 'test_description', 5);
+INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (1, 100, '2022-05-01 00:00:00', '2022-05-31 00:00:00');
+INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (2, 200, '2022-12-01 00:00:00', '2022-12-31 00:00:00');
+INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (3, 1, '2022-12-14 00:00:00', '2022-12-15 00:00:00');
+INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (4, 12, '2022-07-01 00:00:00', '2022-12-31 00:00:00');
+INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (5, 77, '2022-09-01 00:00:00', '2022-12-31 00:00:00');
 
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-05-02 12:54:11', 1, 3, 200);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-05-20 13:00:11', 1, 2, 254);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-05-23 14:00:21', 1, 3, 512);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-05-30 15:15:00', 1, 2, 598);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-05-30 23:59:11', 1, 1, 1000);
 
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (1, 100, '2021-12-01 00:00:00', '2021-12-15 00:00:00');
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (2, 100, '2021-11-01 00:00:00', '2021-11-30 00:00:00');
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (3, 200, '2021-10-01 00:00:00', '2021-10-02 00:00:00');
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (1, 1, '2021-12-16 00:00:00', '2021-12-31 00:00:00');
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (4, 200, '2021-12-20 00:00:00', '2021-12-29 00:00:00');
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (5, 300, '2021-12-21 00:00:00', '2021-12-22 00:00:00');
-INSERT INTO "Auction" (nft_id, minimal_price, start_time, end_time) VALUES (6, 500, '2021-12-22 00:00:00', '2021-12-29 00:00:00');
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-02 12:54:11', 2, 2, 201);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-22 12:00:11', 2, 1, 212);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-23 11:00:21', 2, 3, 999);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-11 16:15:00', 2, 4, 1000);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-29 22:59:11', 2, 5, 2000);
 
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-14 12:54:11', 3, 2, 2);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-14 12:58:11', 3, 1, 3);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-12-14 13:00:21', 3, 3, 4);
 
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-01 00:00:00', 1, 2, 100);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-02 00:00:00', 1, 3, 120);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-03 00:00:00', 1, 4, 150);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-01 12:48:00', 1, 5, 160);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-03 00:00:00', 3, 2, 400);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-06 00:00:00', 3, 2, 400);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-02 00:00:00', 3, 2, 400);
-INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2021-12-03 00:00:00', 3, 2, 400);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-07-02 12:54:11', 4, 2, 13);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-07-22 12:00:11', 4, 1, 14);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-07-22 22:59:11', 4, 5, 17);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-07-23 11:00:21', 4, 3, 18);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-07-25 21:15:00', 4, 4, 25);
+INSERT INTO "Bid" (timestamp, auction_id, bidder_id, bid_price) VALUES ('2022-07-30 23:59:11', 4, 1, 133);
