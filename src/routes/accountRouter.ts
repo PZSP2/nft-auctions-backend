@@ -20,10 +20,7 @@ accountRouter.post("/", accountController.createAccount);
 
 accountRouter.put("/:accountId", accountController.updateAccount);
 
-accountRouter.get(
-  "/:accountId/wallet",
-  accountController.checkWalletStatus
-);
+accountRouter.get("/:accountId/wallet", accountController.checkWalletStatus);
 
 accountRouter.get("/:accountId/offers", accountController.getOffers);
 accountRouter.get("/brokerOffers", accountController.getBrokerOffers);

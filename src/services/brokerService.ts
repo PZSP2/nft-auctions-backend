@@ -5,7 +5,7 @@ import { BaseResponse } from "xrpl/dist/npm/models/methods/baseMethod";
 import BuyOfferInfoModel from "../models/buyOfferInfoModel";
 import { PrismaClient } from "@prisma/client";
 import SellOfferInfoModel from "../models/sellOfferInfoModel";
-import AuctionOffers from "../models/auctionOffers";
+import AuctionOffers from "../models/auction/auctionOffers";
 
 // TODO refactor this class
 export class BrokerService {

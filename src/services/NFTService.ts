@@ -1,7 +1,9 @@
 import { NFT, PrismaClient } from "@prisma/client";
-import NFTMintDTO from "../models/nftMintDTO";
+import NFTMintDTO from "../models/nft/nftMintDTO";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
 import { convertStringToHex } from "xrpl";
+import IpfsUtils from "../utils/ipfsUtils";
+
 export default class NFTService {
   private ledger: XrpLedgerAdapter;
   private prisma: PrismaClient;
@@ -20,42 +22,70 @@ export default class NFTService {
   }
 
   async getAllNFTs(): Promise<NFT[]> {
-    return this.prisma.nFT.findMany();
+    // map nfts to NFTItem
+    return await this.prisma.nFT.findMany({
+      include: {
+        issuer: true,
+      },
+    });
   }
 
   async getNFTById(nftId: number): Promise<NFT | null> {
-    return this.prisma.nFT.findFirst({
+    const nft = await this.prisma.nFT.findFirst({
       where: {
         id: nftId,
+      },
+    });
+    if (nft == null) {
+      return null;
+    }
+    return nft;
+  }
+
+  async createNFT(
+    nftInfo: NFTMintDTO,
+    file: Express.Multer.File
+  ): Promise<NFT> {
+    const uri = await IpfsUtils.ipfsFileUpload(file);
+    if (uri != null) {
+      nftInfo.uri = uri;
+    }
+    return this.prisma.nFT.create({
+      data: {
+        name: nftInfo.name,
+        issuer_id: Number(nftInfo.accountId),
+        uri: nftInfo.uri,
+        description: nftInfo.description,
       },
     });
   }
 
   // TODO refactor
-  async mintNFT(nftInfo: NFTMintDTO): Promise<NFT | null> {
-    const walletDB = await this.prisma.user.findFirst({
+  async mintNFT(nftId: number): Promise<number | null> {
+    const nft = await this.prisma.nFT.findFirst({
       where: {
-        id: nftInfo.accountId,
+        id: nftId,
+      },
+      include: {
+        issuer: true,
       },
     });
-    if (walletDB?.wallet_seed == null) return null;
-    const wallet = await this.ledger.getWallet(walletDB?.wallet_seed);
-    const nft = await this.prisma.nFT.create({
-      data: {
-        name: nftInfo.name,
-        issuer_id: nftInfo.accountId,
-        uri: nftInfo.uri,
-      },
-    });
+    if (nft == null) {
+      return null;
+    }
+
+    const walletSeed = nft.issuer.wallet_seed;
+    if (walletSeed == null) return null;
+    const wallet = await this.ledger.getWallet(walletSeed);
     this.ledger
-      .mintNFT(nftInfo, wallet)
+      .mintNFT(nft.uri, wallet)
       .then(async () => {
         console.log("Minting process completed");
         const nfts = await this.ledger.getAccountNFTsResponse(
           wallet.classicAddress
         );
         const newNft = nfts?.result?.account_nfts?.find(
-          (nft) => nft.URI === convertStringToHex(nftInfo.uri)
+          (accountNft) => accountNft.URI === convertStringToHex(nft.uri)
         );
         if (newNft != null) {
           await this.prisma.nFT.update({
@@ -78,7 +108,7 @@ export default class NFTService {
           },
         });
       });
-    return nft;
+    return nftId;
   }
 
   async checkMintingProcess(nftID: number): Promise<boolean> {

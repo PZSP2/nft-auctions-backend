@@ -14,7 +14,6 @@ import {
 } from "xrpl";
 import SellOfferInfoModel from "../models/sellOfferInfoModel";
 import BuyOfferInfoModel from "../models/buyOfferInfoModel";
-import NFTMintDTO from "../models/nftMintDTO";
 import AcceptOfferDTO from "../models/acceptOfferDTO";
 
 // TODO REFATOR ALL THIS
@@ -34,45 +33,40 @@ export default class XrpLedgerAdapter {
     this.client = new Client(netType);
   }
 
-  public static getInstance(): XrpLedgerAdapter {
+  public static getInstance = (): XrpLedgerAdapter => {
     if (!XrpLedgerAdapter.instance) {
       XrpLedgerAdapter.instance = new XrpLedgerAdapter(this.defaultNetType);
     }
     return XrpLedgerAdapter.instance;
-  }
+  };
 
-  async connectClient(): Promise<void> {
+  connectClient = async (): Promise<void> => {
     if (!this.client.isConnected()) {
       console.log(
         "Connecting to client on net: " + XrpLedgerAdapter.defaultNetType
       );
       await this.client.connect();
     }
-  }
+  };
 
-  async disconnectClient(): Promise<void> {
+  disconnectClient = async (): Promise<void> => {
     if (this.client.isConnected()) {
       console.log("Disconnecting client");
       await this.client.disconnect();
     }
-  }
+  };
 
-  async getWalletBalance(walletAddress: string): Promise<string> {
-    return await this.client.getXrpBalance(walletAddress);
-  }
-
-  getWallet(seed: string): Wallet {
+  getWallet = (seed: string): Wallet => {
     console.log("Retrieving wallet");
     return Wallet.fromSeed(seed);
-  }
+  };
 
-  async getBalance(walletAddress: string): Promise<number> {
-      return Number(await this.client.getXrpBalance(walletAddress));
-  }
-  async createSellOffer(
+  getBalance = async (walletAddress: string): Promise<number> =>
+    Number(await this.client.getXrpBalance(walletAddress));
+  createSellOffer = async (
     sellOffer: SellOfferInfoModel,
     wallet: Wallet
-  ): Promise<TxResponse> {
+  ): Promise<TxResponse> => {
     const offer: NFTokenCreateOffer = {
       Account: sellOffer.accountAddress,
       TransactionType: "NFTokenCreateOffer",
@@ -82,12 +76,12 @@ export default class XrpLedgerAdapter {
       Flags: 0x00000001,
     };
     return await this.client.submitAndWait(offer, { wallet: wallet });
-  }
+  };
 
-  async createBuyOffer(
+  createBuyOffer = async (
     buyOffer: BuyOfferInfoModel,
     wallet: Wallet
-  ): Promise<TxResponse> {
+  ): Promise<TxResponse> => {
     const offer: NFTokenCreateOffer = {
       Account: buyOffer.accountAddress,
       TransactionType: "NFTokenCreateOffer",
@@ -97,22 +91,22 @@ export default class XrpLedgerAdapter {
     };
     console.log("Creating buy offer");
     return await this.client.submitAndWait(offer, { wallet: wallet });
-  }
+  };
 
-  async mintNFT(nftInfo: NFTMintDTO, wallet: Wallet): Promise<TxResponse> {
+  mintNFT = async (uri: string, wallet: Wallet): Promise<TxResponse> => {
     const mintTransaction: NFTokenMint = {
       TransactionType: "NFTokenMint",
       Account: wallet.classicAddress,
-      URI: convertStringToHex(nftInfo.uri),
-      Flags: nftInfo.flags,
+      URI: convertStringToHex(uri),
+      Flags: 0x00000008,
       NFTokenTaxon: 0,
     };
     return await this.client.submitAndWait(mintTransaction, { wallet: wallet });
-  }
+  };
 
-  async getNftOffersByNftId(
+  getNftOffersByNftId = async (
     nftId: string
-  ): Promise<NFTBuyOffersResponse | null> {
+  ): Promise<NFTBuyOffersResponse | null> => {
     const request: NFTBuyOffersRequest = {
       command: "nft_buy_offers",
       nft_id: nftId,
@@ -121,12 +115,12 @@ export default class XrpLedgerAdapter {
       console.log(err);
       return null;
     });
-  }
+  };
 
-  async getOffersByAccount(
+  getOffersByAccount = async (
     accountAddress: string
-  ): Promise<AccountOffersResponse | null> {
-    return await this.client
+  ): Promise<AccountOffersResponse | null> =>
+    await this.client
       .request({
         command: "account_offers",
         account: accountAddress,
@@ -135,9 +129,8 @@ export default class XrpLedgerAdapter {
         console.log(err);
         return null;
       });
-  }
 
-  acceptNftOffer(offer: AcceptOfferDTO, wallet: Wallet): void {
+  acceptNftOffer = (offer: AcceptOfferDTO, wallet: Wallet): void => {
     const transactionBlob: NFTokenAcceptOffer = {
       TransactionType: "NFTokenAcceptOffer",
       Account: offer.brokerAddress,
@@ -153,11 +146,11 @@ export default class XrpLedgerAdapter {
       .catch((err) => {
         console.log(`Error during accepting transaction: ${err}`);
       });
-  }
+  };
 
-  async fundWallet(
+  fundWallet = async (
     seed: string | null
-  ): Promise<Wallet | { wallet: Wallet; balance: number }> {
+  ): Promise<Wallet | { wallet: Wallet; balance: number }> => {
     console.log("Funding wallet");
     if (seed != null) {
       return Wallet.fromSeed(seed);
@@ -165,11 +158,11 @@ export default class XrpLedgerAdapter {
       console.log("Funding a new wallet");
       return await this.client.fundWallet();
     }
-  }
+  };
 
-  async getAccountNFTsResponse(
+  getAccountNFTsResponse = async (
     accountAddress: string
-  ): Promise<AccountNFTsResponse | null> {
+  ): Promise<AccountNFTsResponse | null> => {
     const request: AccountNFTsRequest = {
       command: "account_nfts",
       account: accountAddress,
@@ -178,5 +171,5 @@ export default class XrpLedgerAdapter {
       console.log(err);
       return null;
     });
-  }
+  };
 }

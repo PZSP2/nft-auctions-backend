@@ -11,5 +11,5 @@ export const auctionRouter = Router();
 auctionRouter.get("/", auctionController.getAllAuctions);
 auctionRouter.get("/:auctionId", auctionController.getAuctionByAuctionId);
 auctionRouter.post("/", auctionController.createAuction);
-auctionRouter.post("/bid", auctionController.bidOnAuction);
+auctionRouter.post("/:auctionId/bid", auctionController.bidOnAuction);
 auctionRouter.put("/:auctionId/confirm", auctionController.confirmAuction);

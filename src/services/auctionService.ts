@@ -1,8 +1,8 @@
 import { Auction, Bid, NFT, PrismaClient } from "@prisma/client";
-import AuctionBidDTO from "../models/auctionBidDTO";
-import { CreateAuctionDTO } from "../models/createAuctionDTO";
-import { BrokerService } from "./brokerService";
+import AuctionBidDTO from "../models/auction/auctionBidDTO";
+import { CreateAuctionDTO } from "../models/auction/createAuctionDTO";
 import { addMinutes } from "date-fns";
+import BidError from "./BidError";
 
 export default class AuctionService {
   private readonly prisma: PrismaClient;
@@ -10,6 +10,7 @@ export default class AuctionService {
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
   }
+
   getAuctionByAuctionId = async (
     auctionId: number
   ): Promise<(Auction & { bids: Bid[]; nft: NFT }) | null> =>
@@ -26,11 +27,11 @@ export default class AuctionService {
   getAllAuctions = async (
     nftId: number | null,
     isActive: boolean | null
-  ): Promise<(Auction & { bids: Bid[]; nft: NFT })[]> =>
-    await this.prisma.auction.findMany({
+  ): Promise<(Auction & { bids: Bid[]; nft: NFT })[]> => {
+    return await this.prisma.auction.findMany({
       where: {
         end_time: {
-          gt: isActive != null ? new Date() : undefined,
+          gt: isActive ? new Date() : undefined,
         },
         nft_id: nftId != null ? nftId : undefined,
       },
@@ -39,6 +40,7 @@ export default class AuctionService {
         bids: true,
       },
     });
+  };
 
   getHighestBid = (auctionId: number): Promise<Bid | null> =>
     this.prisma.bid.findFirst({
@@ -62,35 +64,36 @@ export default class AuctionService {
   };
 
   // TODO refactor this shit
-  bidOnAuction = async (auctionBid: AuctionBidDTO): Promise<Bid | null> => {
-    const auction = await this.getAuctionByAuctionId(auctionBid.auctionId);
+  bidOnAuction = async (
+    auctionId: number,
+    bid: AuctionBidDTO
+  ): Promise<Bid | BidError> => {
+    const auction = await this.getAuctionByAuctionId(auctionId);
     const highestBid =
-      (await this.getHighestBid(auctionBid.auctionId))?.bid_price ??
+      (await this.getHighestBid(auctionId))?.bid_price ??
       auction?.minimal_price ??
       0;
-    if (
-      (await this.checkIfAuctionIsActive(auction)) &&
-      auctionBid.bidAmount > highestBid
-    ) {
-      const newBid = await this.prisma.bid.create({
-        data: {
-          auction_id: auctionBid.auctionId,
-          bidder_id: auctionBid.bidderId,
-          bid_price: auctionBid.bidAmount,
-        },
-      });
-      await this.prisma.auction.update({
-        where: {
-          id: auctionBid.auctionId,
-        },
-        data: {
-          end_time: new Date(addMinutes(new Date(), 5)),
-        },
-      });
-      return newBid;
-    } else {
-      return null;
+    if (!(await this.checkIfAuctionIsActive(auction))) {
+      return new BidError("Auction is not active");
+    } else if (bid.bidAmount <= highestBid) {
+      return new BidError("Bid amount is too low");
     }
+    const newBid = await this.prisma.bid.create({
+      data: {
+        auction_id: auctionId,
+        bidder_id: bid.bidderId,
+        bid_price: bid.bidAmount,
+      },
+    });
+    await this.prisma.auction.update({
+      where: {
+        id: auctionId,
+      },
+      data: {
+        end_time: new Date(addMinutes(new Date(), 5)),
+      },
+    });
+    return newBid;
   };
 
   createAuction = async (
@@ -115,19 +118,19 @@ export default class AuctionService {
     if (highestBid == null) {
       return null;
     }
-    const nftToken = auction.nft.ledgerId ?? "";
-    const buyer = highestBid.bidder_id;
-    const seller = auction.nft.issuer_id;
-    const price = highestBid.bid_price;
-
-    const offers = await BrokerService.getInstance().createAuctionOffers(
-      auctionId,
-      nftToken,
-      price,
-      buyer,
-      seller
-    );
-    await BrokerService.getInstance().finalizeAuction(offers);
+    // const nftToken = auction.nft.ledgerId ?? "";
+    // const buyer = highestBid.bidder_id;
+    // const seller = auction.nft.issuer_id;
+    // const price = highestBid.bid_price;
     return auction;
+    // const offers = await BrokerService.getInstance().createAuctionOffers(
+    //   auctionId,
+    //   nftToken,
+    //   price,
+    //   buyer,
+    //   seller
+    // );
+    // await BrokerService.getInstance().finalizeAuction(offers);
+    // return auction;
   };
 }

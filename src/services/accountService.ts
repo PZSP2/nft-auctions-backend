@@ -1,7 +1,7 @@
 import { NFT, PrismaClient, User } from "@prisma/client";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
-import CreateAccountDto from "../models/createAccountDTO";
-import {AccountOffersResponse, Wallet} from "xrpl";
+import CreateAccountDto from "../models/account/createAccountDTO";
+import { AccountOffersResponse, Wallet } from "xrpl";
 import WalletDTO from "../models/walletDTO";
 
 export default class AccountService {
@@ -75,12 +75,12 @@ export default class AccountService {
       },
     });
     if (user?.wallet_address == null || user?.wallet_seed == null) return null;
-    const balance = await this.ledger.getBalance(user.wallet_address)
+    const balance = await this.ledger.getBalance(user.wallet_address);
     return {
-        walletAddress: user?.wallet_address,
-        walletSeed: user?.wallet_seed,
-        balance: balance,
-    }
+      walletAddress: user?.wallet_address,
+      walletSeed: user?.wallet_seed,
+      balance: balance,
+    };
   }
 
   async getAccountNFTs(accountId: number): Promise<NFT[]> {

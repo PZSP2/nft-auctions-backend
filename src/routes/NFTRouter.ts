@@ -10,6 +10,8 @@ const ledger = XrpLedgerAdapter.getInstance();
 const service = new NFTService(ledger, new PrismaClient());
 const controller = new NFTController(service);
 
+NFTRouter.post("/", controller.uploadFile, controller.uploadNft);
 NFTRouter.get("/", controller.getAllNfts);
-NFTRouter.post("/mint", controller.mintNFT);
-NFTRouter.get("/mintStatus/:nftId", controller.getNFTMintStatus);
+NFTRouter.get("/:nftId", controller.getNFTById);
+NFTRouter.post("/:nftId/mint", controller.mintNFT);
+NFTRouter.get("/:nftId/mint", controller.getNFTMintStatus);

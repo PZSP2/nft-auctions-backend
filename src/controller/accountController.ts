@@ -1,4 +1,4 @@
-import CreateAccountDto from "../models/createAccountDTO";
+import CreateAccountDto from "../models/account/createAccountDTO";
 import AccountService from "../services/accountService";
 import { Request, Response } from "express";
 import { BrokerService } from "../services/brokerService";
@@ -36,7 +36,11 @@ export default class AccountController {
     const accountId = Number(req.params.accountId);
     if (accountId != null) {
       const wallet = await this.service.getWallet(accountId);
-      res.status(200).json(wallet);
+      if (wallet == null) {
+        res.status(404).json({ message: "Wallet not ready yet" });
+      } else {
+        res.status(200).json(wallet);
+      }
     } else {
       res
         .status(404)
