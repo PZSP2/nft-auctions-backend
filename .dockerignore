@@ -1,0 +1,8 @@
+node_modules
+.gitignore
+README.md
+documentation.md
+dist
+.git
+.eslintrc.cjs
+yarn-error.log

@@ -3,6 +3,10 @@ import { Router } from "express";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
 import AccountService from "../services/accountService";
 import AccountController from "../controller/accountController";
+import { createAccountSchema } from "../models/account/createAccountDTO";
+import { accountIdParams } from "../models/account/accountIdParams";
+import schemaValidator from "../middleware/schemaValidator";
+import { protectedPath } from "../middleware/passportMiddleware";
 
 const accountService = new AccountService(
   new PrismaClient(),
@@ -12,15 +16,30 @@ const accountController = new AccountController(accountService);
 
 export const accountRouter = Router();
 
-accountRouter.post("/:accountId/wallet", accountController.fundWallet);
+accountRouter.post(
+  "/:accountId/wallet",
+  protectedPath,
+  schemaValidator({ schema: accountIdParams }),
+  accountController.fundWallet
+);
 
-accountRouter.get("/:accountId", accountController.getAccount);
+accountRouter.get(
+  "/:accountId/wallet",
+  protectedPath,
+  schemaValidator({ schema: accountIdParams }),
+  accountController.getWallet
+);
 
-accountRouter.post("/", accountController.createAccount);
+accountRouter.get(
+  "/:accountId",
+  schemaValidator({ schema: accountIdParams }),
+  accountController.getAccount
+);
 
-accountRouter.put("/:accountId", accountController.updateAccount);
+accountRouter.post(
+  "/",
+  schemaValidator({ schema: createAccountSchema }),
+  accountController.createAccount
+);
 
-accountRouter.get("/:accountId/wallet", accountController.checkWalletStatus);
-
-accountRouter.get("/:accountId/offers", accountController.getOffers);
-accountRouter.get("/brokerOffers", accountController.getBrokerOffers);
+accountRouter.put("/", protectedPath, accountController.updateAccount);

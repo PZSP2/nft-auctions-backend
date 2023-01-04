@@ -1,8 +1,9 @@
 import CreateAccountDto from "../models/account/createAccountDTO";
 import AccountService from "../services/accountService";
 import { Request, Response } from "express";
-import { BrokerService } from "../services/brokerService";
-// TODO Add validation and error handling etc
+import MapperUtils from "../utils/mapperUtils";
+import { Prisma, User } from "@prisma/client";
+import UniqueConstraintError from "../errors/uniqueConstraintError";
 
 export default class AccountController {
   private service: AccountService;
@@ -11,95 +12,82 @@ export default class AccountController {
     this.service = service;
   }
 
-  createAccount = async (req: Request, res: Response): Promise<void> => {
+  createAccount = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
     const createAccountDTO: CreateAccountDto = req.body;
-
-    if (createAccountDTO != null) {
-      const account = await this.service.createAccount(createAccountDTO);
-      res.status(200).json(account);
-    } else {
-      res.status(400).json("Bad request");
-    }
+    this.service
+      .createAccount(createAccountDTO)
+      .then((account) =>
+        res.status(201).json(MapperUtils.mapUserToAccountResponse(account))
+      )
+      .catch((err) => {
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+          if (err.code === "P2002") {
+            next(new UniqueConstraintError("Email already exists"));
+          }
+        } else {
+          next(err);
+        }
+      });
   };
 
-  fundWallet = async (req: Request, res: Response): Promise<void> => {
-    const accountId = Number(req.params.accountId);
-    if (accountId != null) {
-      const wallet = await this.service.fundAccountWallet(accountId);
-      res.status(200).json(wallet);
-    } else {
-      res.status(400).json({ message: "No account id provided" });
-    }
+  fundWallet = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const accountId = req.params.accountId as unknown as number;
+    this.service
+      .fundAccountWallet(accountId, this.service.onWalletFunded)
+      .then((wallet) => res.status(200).json(wallet))
+      .catch((err) => next(err));
   };
 
-  checkWalletStatus = async (req: Request, res: Response): Promise<void> => {
-    const accountId = Number(req.params.accountId);
-    if (accountId != null) {
-      const wallet = await this.service.getWallet(accountId);
-      if (wallet == null) {
-        res.status(404).json({ message: "Wallet not ready yet" });
-      } else {
-        res.status(200).json(wallet);
-      }
-    } else {
-      res
-        .status(404)
-        .json({ message: `No account with id ${accountId} found` });
-    }
-  };
-
-  getNftsByAccountId = async (req: Request, res: Response): Promise<void> => {
-    const accountId = Number(req.params.accountId);
-    if (accountId != null) {
-      const nfts = await this.service.getAccountNFTs(accountId);
-      res.status(200).json(nfts);
-    } else {
-      res
-        .status(404)
-        .json({ message: `No account with id ${accountId} found` });
-    }
-  };
-  updateAccount = async (req: Request, res: Response): Promise<void> => {
-    const accountId = Number(req.params.accountId);
+  updateAccount = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const accountId = (req.user as User).id;
     const account = req.body;
-    const updatedAccount = this.service.updateAccount(accountId, account);
-    if (updatedAccount != null) {
-      res.status(200).json(updatedAccount);
-    } else {
-      res
-        .status(404)
-        .json({ message: `No account with id ${accountId} found` });
-    }
+    this.service
+      .updateAccount(accountId, account)
+      .then((account) =>
+        res.status(200).json(MapperUtils.mapUserToAccountResponse(account))
+      )
+      .catch((err) => next(err));
   };
 
-  getAccount = async (req: Request, res: Response): Promise<void> => {
-    const accountId = Number(req.params.accountId);
-    const account = await this.service.getAccountByAccountId(accountId);
-    if (account != null) {
-      res.status(200).json(account);
-    } else {
-      res
-        .status(404)
-        .json({ message: `No account with id ${accountId} found` });
-    }
+  getAccount = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const accountId = req.params.accountId as unknown as number;
+    this.service
+      .getAccountByAccountId(accountId)
+      .then((account) =>
+        res.status(200).json(MapperUtils.mapUserToAccountResponse(account))
+      )
+      .catch((err) => next(err));
   };
-
-  getOffers = async (req: Request, res: Response): Promise<void> => {
-    const accountId = Number(req.params.accountId);
-    const offers = await this.service.getAccountOffers(accountId);
-    if (offers != null) {
-      res.status(200).json(offers);
-    } else {
-      res
-        .status(404)
-        .json({ message: `No account with id ${accountId} found` });
-    }
-  };
-
-  getBrokerOffers = async (req: Request, res: Response): Promise<void> => {
-    const offers = await BrokerService.getInstance().getBookersOffers();
-    if (offers != null) {
-      res.status(200).json(offers);
-    }
+  getWallet = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const accountId = req.params.accountId as unknown as number;
+    this.service
+      .getAccountBalance(accountId)
+      .then((balance) =>
+        res.status(200).json({
+          walleAddress: balance.walletAddress,
+          balance: balance.balance,
+        })
+      )
+      .catch((err) => next(err));
   };
 }

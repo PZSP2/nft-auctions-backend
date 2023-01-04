@@ -1,8 +1,11 @@
-import { NFT, PrismaClient } from "@prisma/client";
-import NFTMintDTO from "../models/nft/nftMintDTO";
+import { NFT, PrismaClient, User } from "@prisma/client";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
-import { convertStringToHex } from "xrpl";
+import { convertStringToHex, NFTokenCreateOffer } from "xrpl";
 import IpfsUtils from "../utils/ipfsUtils";
+import NftCreateError from "../errors/nftCreateError";
+import ResourceNotFoundError from "../errors/resourceNotFoundError";
+import NotAuthorizedError from "../errors/notAuthorizedError";
+import mintNftDto from "../models/nft/in/mintNftDto";
 
 export default class NFTService {
   private ledger: XrpLedgerAdapter;
@@ -13,69 +16,67 @@ export default class NFTService {
     this.prisma = prisma;
   }
 
-  async getNFTIssuedByAccount(accountID: number): Promise<NFT[]> {
-    return this.prisma.nFT.findMany({
+  getNFTIssuedByAccount = async (accountID: number): Promise<NFT[]> =>
+    this.prisma.nFT.findMany({
       where: {
         issuer_id: accountID,
       },
     });
-  }
 
-  async getAllNFTs(): Promise<NFT[]> {
-    // map nfts to NFTItem
-    return await this.prisma.nFT.findMany({
+  getAllNFTs = async (): Promise<(NFT & { issuer: User; owner: User })[]> =>
+    this.prisma.nFT.findMany({
       include: {
         issuer: true,
+        owner: true,
       },
     });
-  }
 
-  async getNFTById(nftId: number): Promise<NFT | null> {
+  getNFTById = async (
+    nftId: number
+  ): Promise<NFT & { issuer: User; owner: User }> => {
     const nft = await this.prisma.nFT.findFirst({
       where: {
         id: nftId,
       },
+      include: {
+        issuer: true,
+        owner: true,
+      },
     });
-    if (nft == null) {
-      return null;
-    }
+    if (nft == null)
+      throw new ResourceNotFoundError("NFT with id " + nftId + " not found");
     return nft;
-  }
+  };
 
-  async createNFT(
-    nftInfo: NFTMintDTO,
+  createNFT = async (
+    nftInfo: mintNftDto,
     file: Express.Multer.File
-  ): Promise<NFT> {
+  ): Promise<NFT & { issuer: User; owner: User }> => {
     const uri = await IpfsUtils.ipfsFileUpload(file);
-    if (uri != null) {
-      nftInfo.uri = uri;
-    }
     return this.prisma.nFT.create({
       data: {
         name: nftInfo.name,
         issuer_id: Number(nftInfo.accountId),
-        uri: nftInfo.uri,
+        uri: uri ?? "",
         description: nftInfo.description,
-      },
-    });
-  }
-
-  // TODO refactor
-  async mintNFT(nftId: number): Promise<number | null> {
-    const nft = await this.prisma.nFT.findFirst({
-      where: {
-        id: nftId,
+        owner_id: Number(nftInfo.accountId),
+        is_image: file.mimetype.startsWith("image"),
       },
       include: {
         issuer: true,
+        owner: true,
       },
     });
-    if (nft == null) {
-      return null;
-    }
+  };
 
+  mintNFT = async (nftId: number): Promise<number> => {
+    const nft = await this.getNFTById(nftId);
+    if (nft == null) {
+      throw new ResourceNotFoundError("NFT with id " + nftId + " not found");
+    }
     const walletSeed = nft.issuer.wallet_seed;
-    if (walletSeed == null) return null;
+    if (walletSeed == null)
+      throw new NftCreateError("Wallet seed of issuer not found");
     const wallet = await this.ledger.getWallet(walletSeed);
     this.ledger
       .mintNFT(nft.uri, wallet)
@@ -109,15 +110,69 @@ export default class NFTService {
         });
       });
     return nftId;
-  }
+  };
 
   async checkMintingProcess(nftID: number): Promise<boolean> {
-    console.log(nftID);
     const nft = await this.prisma.nFT.findFirst({
       where: {
         id: nftID,
       },
     });
     return nft?.ledgerId != null;
+  }
+
+  transferNFT = async (
+    nftId: number,
+    accountId: number,
+    destinationAddress: string
+  ): Promise<boolean | Error> => {
+    const nft = await this.prisma.nFT.findFirst({
+      where: {
+        id: nftId,
+      },
+      include: {
+        owner: true,
+      },
+    });
+    if (nft == null)
+      throw new ResourceNotFoundError("NFT with id " + nftId + " not found");
+
+    if (nft.issuer_id !== accountId)
+      throw new NotAuthorizedError("Account is not the owner of the NFT");
+
+    const walletSeed = nft.owner.wallet_seed;
+    if (!walletSeed || !nft.ledgerId) return false;
+    const wallet = await this.ledger.getWallet(walletSeed);
+    const offer: NFTokenCreateOffer = {
+      Amount: "0",
+      TransactionType: "NFTokenCreateOffer",
+      Account: wallet.classicAddress,
+      Destination: destinationAddress,
+      NFTokenID: nft.ledgerId,
+    };
+
+    const result = await this.ledger.createSellOffer(offer, wallet);
+
+    if (result.result.validated) {
+      await this.prisma.nFT.update({
+        where: {
+          id: nft.id,
+        },
+        data: {
+          owner_id: accountId,
+        },
+      });
+    }
+    return result.result.validated ?? false;
+  };
+
+  async ifNftExist(uri: string) {
+    return (
+      (await this.prisma.nFT.findFirst({
+        where: {
+          uri: uri,
+        },
+      })) != null
+    );
   }
 }

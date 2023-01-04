@@ -1,8 +1,17 @@
-import { NFT, PrismaClient, User } from "@prisma/client";
+import {
+  Auction,
+  Bid,
+  NFT,
+  PrismaClient,
+  Role,
+  School,
+  User,
+} from "@prisma/client";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
 import CreateAccountDto from "../models/account/createAccountDTO";
-import { AccountOffersResponse, Wallet } from "xrpl";
-import WalletDTO from "../models/walletDTO";
+import { Wallet } from "xrpl";
+import AuthUtils from "../utils/AuthUtils";
+import ResourceNotFoundError from "../errors/resourceNotFoundError";
 
 export default class AccountService {
   private prisma: PrismaClient;
@@ -13,78 +22,68 @@ export default class AccountService {
     this.ledger = ledger;
   }
 
-  async getAccountByAccountId(accountId: number): Promise<User | null> {
-    return await this.prisma.user.findFirst({
+  getAccountByAccountId = async (
+    accountId: number
+  ): Promise<
+    User & {
+      owned_nft: NFT[];
+      bid: (Bid & { auction: Auction & { nft: NFT } })[];
+    }
+  > => {
+    const account = await this.prisma.user.findFirst({
+      include: {
+        owned_nft: true,
+        bid: {
+          include: {
+            auction: {
+              include: {
+                nft: true,
+              },
+            },
+          },
+        },
+      },
       where: {
         id: accountId,
       },
     });
-  }
+    if (account == null)
+      throw new ResourceNotFoundError(
+        "Account with id " + accountId + " not found"
+      );
+    return account;
+  };
 
-  async createAccount(createAccountDTO: CreateAccountDto): Promise<User> {
-    return await this.prisma.user.create({
+  createAccount = async (createAccountDTO: CreateAccountDto): Promise<User> =>
+    this.prisma.user.create({
       data: {
+        accountType: Role[createAccountDTO.role as keyof typeof Role],
         email: createAccountDTO.email,
-        password: createAccountDTO.password,
+        name: createAccountDTO.name,
+        password: await AuthUtils.hashPassword(createAccountDTO.password),
       },
     });
-  }
 
-  async fundAccountWallet(accountId: number): Promise<void> {
-    this.ledger.fundWallet(null).then(
-      async (
-        wallet:
-          | Wallet
-          | {
-              wallet: Wallet;
-              balance: number;
-            }
-      ) => {
-        console.log(wallet);
-        if (wallet instanceof Wallet) {
-          console.log("Updating wallet address - Wallet instance");
-          await this.prisma.user.update({
-            where: {
-              id: accountId,
-            },
-            data: {
-              wallet_seed: wallet.seed,
-              wallet_address: wallet.address,
-            },
-          });
-        } else {
-          console.log("Updating wallet address - Wallet with balance");
-          await this.prisma.user.update({
-            where: {
-              id: accountId,
-            },
-            data: {
-              wallet_seed: wallet.wallet.seed,
-              wallet_address: wallet.wallet.address,
-            },
-          });
-        }
-      }
-    );
-  }
-
-  async getWallet(accountId: number): Promise<WalletDTO | null> {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: accountId,
-      },
-    });
-    if (user?.wallet_address == null || user?.wallet_seed == null) return null;
-    const balance = await this.ledger.getBalance(user.wallet_address);
-    return {
-      walletAddress: user?.wallet_address,
-      walletSeed: user?.wallet_seed,
-      balance: balance,
-    };
-  }
-
-  async getAccountNFTs(accountId: number): Promise<NFT[]> {
-    return await this.prisma.nFT.findMany({
+  fundAccountWallet = async (
+    accountId: number,
+    onWalletFunded: (accountId: number, wallet: Wallet) => void
+  ): Promise<void> => {
+    const account = await this.getAccountByAccountId(accountId);
+    if (account.wallet_address != null)
+      throw new Error("Account already has a wallet");
+    this.ledger
+      .fundWallet(null)
+      .then(async (wallet: Wallet | { wallet: Wallet; balance: number }) => {
+        onWalletFunded(
+          accountId,
+          wallet instanceof Wallet ? wallet : wallet.wallet
+        );
+      });
+  };
+  getAccountNFTs = async (
+    accountId: number
+  ): Promise<(NFT & { issuer: User })[]> =>
+    this.prisma.nFT.findMany({
       where: {
         issuer_id: accountId,
       },
@@ -92,20 +91,17 @@ export default class AccountService {
         issuer: true,
       },
     });
-  }
 
-  async updateAccount(
-    accountId: number | null,
+  updateAccount = async (
+    accountId: number,
     account: CreateAccountDto
-  ): Promise<User | null> {
-    if (accountId == null) return null;
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: accountId,
-      },
-    });
-    if (user == null) return null;
-    return await this.prisma.user.update({
+  ): Promise<
+    User & {
+      owned_nft: NFT[];
+      bid: (Bid & { auction: Auction & { nft: NFT } })[];
+    }
+  > =>
+    await this.prisma.user.update({
       where: {
         id: accountId,
       },
@@ -113,18 +109,66 @@ export default class AccountService {
         email: account.email,
         password: account.password,
       },
+      include: {
+        owned_nft: true,
+        bid: {
+          include: {
+            auction: {
+              include: {
+                nft: true,
+              },
+            },
+          },
+        },
+      },
     });
-  }
 
-  async getAccountOffers(
+  getAccountBids = async (
     accountId: number
-  ): Promise<AccountOffersResponse | null> {
+  ): Promise<(Bid & { auction: Auction & { nft: NFT; school: School } })[]> => {
+    return this.prisma.bid.findMany({
+      where: {
+        bidder_id: accountId,
+      },
+      include: {
+        auction: {
+          include: {
+            nft: true,
+            school: true,
+          },
+        },
+      },
+    });
+  };
+
+  onWalletFunded = async (accountId: number, wallet: Wallet) => {
+    console.log("Wallet funded: " + wallet.address + " User id: " + accountId);
+    const walletAddress = wallet.address;
+    const walletSeed = wallet.seed;
+    await this.prisma.user.update({
+      where: {
+        id: accountId,
+      },
+      data: {
+        wallet_seed: walletSeed,
+        wallet_address: walletAddress,
+      },
+    });
+  };
+
+  getAccountBalance = async (
+    accountId: number
+  ): Promise<{ walletAddress: string; balance: number }> => {
     const user = await this.prisma.user.findFirst({
       where: {
         id: accountId,
       },
     });
-    if (user?.wallet_address == null) return null;
-    return await this.ledger.getOffersByAccount(user.wallet_address);
-  }
+    if (user?.wallet_address == null)
+      throw new ResourceNotFoundError("Wallet not yet funded");
+    return {
+      walletAddress: user.wallet_address,
+      balance: await this.ledger.getBalance(user.wallet_address),
+    };
+  };
 }

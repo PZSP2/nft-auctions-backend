@@ -1,13 +1,38 @@
-version: "3.8"
+version: "3"
+
 services:
-  db:
-    image: postgres
-    restart: always
-    environment:
-      - POSTGRES_DB=nft_auctions
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    hostname: postgres
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nft_auctions
     volumes:
-      - ./fill_db.sql:/docker-entrypoint-initdb.d/fill_data.sql
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - internal_db
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - internal_db
+      - default
+volumes:
+  postgres-data:
+networks:
+  internal_db:
+    internal: true
+  default: {}

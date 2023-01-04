@@ -1,7 +1,8 @@
 import AuctionService from "../services/auctionService";
 import { Request, Response } from "express";
-import BidError from "../services/BidError";
-import NftUtils from "../utils/nftUtils";
+import MapperUtils from "../utils/mapperUtils";
+import { User } from "@prisma/client";
+import AuctionBidDTO from "../models/auction/in/auctionBidDTO";
 export default class AuctionController {
   private readonly service: AuctionService;
 
@@ -11,62 +12,79 @@ export default class AuctionController {
 
   getAuctionByAuctionId = async (
     req: Request,
-    res: Response
+    res: Response,
+    next: (err: Error) => void
   ): Promise<void> => {
     const auctionId = Number(req.params.auctionId);
-    const auction = await this.service.getAuctionByAuctionId(auctionId);
-    if (auction != null) {
-      res.status(200).json({
-        ...auction,
-        nft: await NftUtils.mapNftToNftResponse(auction.nft),
-      });
-    } else {
-      res.status(404).json({ message: "Auction not found" });
-    }
+    this.service
+      .getAuctionByAuctionId(auctionId)
+      .then((auction) =>
+        res.status(200).json(MapperUtils.mapAuctionToAuctionResponse(auction))
+      )
+      .catch((err) => next(err));
   };
 
-  getAllAuctions = async (req: Request, res: Response): Promise<void> => {
-    const auctions = await this.service.getAllAuctions(
-      Number(req.query.nftId) || null,
-      req.query.isActive == "true"
-    );
-    const mappedAuctions = await Promise.all(
-      auctions.map(async (auction) => {
-        return {
-          ...auction,
-          nft: await NftUtils.mapNftToNftResponse(auction.nft),
-        };
-      })
-    );
-    res.status(200).json(mappedAuctions);
+  getAllAuctions = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    this.service
+      .getAllAuctions(
+        req.query.schoolId as unknown as number,
+        req.query.isActivated as unknown as boolean,
+        req.query.nftId as unknown as number
+      )
+      .then((auctions) =>
+        res.status(200).json({
+          auctions: auctions.map((auction) =>
+            MapperUtils.mapAuctionToAuctionResponse(auction)
+          ),
+        })
+      )
+      .catch((err) => next(err));
   };
 
-  bidOnAuction = async (req: Request, res: Response): Promise<void> => {
-    const auctionBid = req.body;
+  bidOnAuction = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const auctionBid: AuctionBidDTO = req.body;
     const auctionId = Number(req.params.auctionId);
-    const bid = await this.service.bidOnAuction(auctionId, auctionBid);
-    // if bid is error return 400 else return 200
-    if (bid instanceof BidError) {
-      res.status(400).json({ message: bid.message });
-    } else {
-      res.status(200).json(bid);
-    }
+    this.service
+      .bidOnAuction(auctionId, (req.user as User).id, auctionBid)
+      .then((bid) => res.status(200).json(MapperUtils.mapBidToBidResponse(bid)))
+      .catch((err) => next(err));
   };
 
-  createAuction = async (req: Request, res: Response): Promise<void> => {
-    const auction = req.body;
-    const createdAuction = await this.service.createAuction(auction);
-
-    res.status(200).json(createdAuction);
+  createAuction = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const createAuctionDTO = req.body;
+    const accountId = (req.user as User).id;
+    this.service
+      .createAuction(createAuctionDTO, accountId)
+      .then((auction) =>
+        res
+          .status(201)
+          .json(MapperUtils.mapAuctionToMinimalAuctionResponse(auction))
+      )
+      .catch((err) => next(err));
   };
 
-  confirmAuction = async (req: Request, res: Response): Promise<void> => {
+  confirmAuction = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
     const auctionId = Number(req.params.auctionId);
-    const auction = await this.service.confirmAuction(auctionId);
-    if (auction != null) {
-      res.status(200).json(auction);
-    } else {
-      res.status(400).json({ message: "Auction not found" });
-    }
+    const accountId = (req.user as User).id;
+    this.service
+      .confirmAuction(auctionId, accountId)
+      .then((auction) => res.status(200).json({ auctionId: auction.id }))
+      .catch((err) => next(err));
   };
 }

@@ -1,8 +1,10 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+
 generator client {
   provider = "prisma-client-js"
+  output = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -10,44 +12,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  NORMAL_USER
+  SCHOOL
+}
+
+enum Status {
+  ACTIVE
+  EXPIRED
+  WON
+  CALL_FOR_CONFIRM
+  CONFIRMED
+}
+
 model User {
-  id                Int    @default(autoincrement()) @id
-  email             String @unique
-  password          String
-  wallet_address    String?
-  account_address   String?
-  wallet_seed       String?
-  bid               Bid[]
-  nft               NFT[]
+  id              Int     @id @default(autoincrement())
+  email           String  @unique
+  name            String?
+  accountType     Role
+  password        String
+  wallet_address  String?
+  account_address String?
+  wallet_seed     String?
+  bid             Bid[]
+  issued_nft      NFT[]   @relation("issued_nft")
+  owned_nft       NFT[]   @relation("owned_nft")
 }
 
 model NFT {
-  id                Int    @default(autoincrement()) @id
-  ledgerId          String?
-  name              String
-  uri               String
-  description       String?
-  issuer_id         Int
-  issuer            User   @relation(fields: [issuer_id], references: [id])
-  auctions          Auction[]
+  id          Int       @id @default(autoincrement())
+  ledgerId    String?
+  name        String
+  uri         String
+  description String?
+  is_image    Boolean
+  issuer_id   Int
+  owner_id    Int
+  owner       User      @relation("owned_nft", fields: [owner_id], references: [id])
+  issuer      User      @relation(name: "issued_nft", fields: [issuer_id], references: [id])
+  auctions    Auction[]
+  transferred Boolean   @default(false)
 }
 
 model Auction {
-  id                Int    @default(autoincrement()) @id
-  nft_id            Int
-  nft               NFT    @relation(fields: [nft_id], references: [id])
-  minimal_price     Float
-  start_time        DateTime
-  end_time          DateTime
-  bids              Bid[]
+  id            Int      @id @default(autoincrement())
+  nft_id        Int
+  school_id     Int
+  nft           NFT      @relation(fields: [nft_id], references: [id])
+  minimal_price Float
+  start_time    DateTime
+  end_time      DateTime
+  bids          Bid[]
+  status        Status   @default(ACTIVE)
+  school        School   @relation(fields: [school_id], references: [id])
 }
 
 model Bid {
-  timestamp         DateTime @default(now())
-  auction_id        Int
-  auction           Auction  @relation(fields: [auction_id], references: [id])
-  bidder_id         Int
-  bidder            User     @relation(fields: [bidder_id], references: [id])
-  bid_price         Float
+  timestamp  DateTime @default(now())
+  auction_id Int
+  auction    Auction  @relation(fields: [auction_id], references: [id])
+  bidder_id  Int
+  bidder     User     @relation(fields: [bidder_id], references: [id])
+  bid_price  Float
+  is_won     Boolean  @default(false)
+
   @@id([timestamp, bidder_id, auction_id])
+}
+
+model School {
+  id      Int       @id @default(autoincrement())
+  name    String
+  country String
+  city    String
+  address String
+  phone   String
+  email   String    @unique
+  auctions Auction[]
 }

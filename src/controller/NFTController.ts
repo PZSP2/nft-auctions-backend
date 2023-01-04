@@ -1,11 +1,15 @@
 import { Request, Response } from "express";
 import NFTService from "../services/NFTService";
 import multer, { FileFilterCallback } from "multer";
-import NftUtils from "../utils/nftUtils";
-// TODO Add validation and error handling etc
+import MapperUtils from "../utils/mapperUtils";
+import mintNftDto from "../models/nft/in/mintNftDto";
+import IpfsUtils from "../utils/ipfsUtils";
+import NftCreateError from "../errors/nftCreateError";
+import { User } from "@prisma/client";
 
 export default class NFTController {
   service: NFTService;
+
   constructor(service: NFTService) {
     this.service = service;
   }
@@ -20,7 +24,7 @@ export default class NFTController {
     if (file.mimetype.startsWith("image")) {
       callback(null, true);
     } else {
-      callback(new Error("Not an image! Please upload only images."));
+      callback(new NftCreateError("Not an image! Please upload only images."));
     }
   };
 
@@ -31,55 +35,86 @@ export default class NFTController {
 
   uploadFile = this.upload.single("file");
 
-  uploadNft = async (req: Request, res: Response): Promise<void> => {
+  uploadNft = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
     if (req.file == null) {
-      res.status(400).send("File is null");
+      next(new NftCreateError("Error uploading file"));
+      return;
     } else {
-      const nftInfo = req.body;
-      const nftResult = await this.service.createNFT(nftInfo, req.file);
-      res.json(nftResult);
+      const uri = await IpfsUtils.ipfsFileUpload(req.file);
+      if (uri == null) {
+        next(new NftCreateError("Error uploading file to IPFS"));
+        return;
+      }
+      if (await this.service.ifNftExist(uri)) {
+        next(new NftCreateError("NFT already exists"));
+        return;
+      }
+      const nftInfo: mintNftDto = {
+        accountId: (req.user as User).id,
+        description: req.body.description,
+        name: req.body.name,
+        uri: uri,
+      };
+      this.service
+        .createNFT(nftInfo, req.file)
+        .then((nft) =>
+          res.status(201).json(MapperUtils.mapNftToNftResponse(nft))
+        )
+        .catch((err) => next(err));
     }
   };
-  mintNFT = async (req: Request, res: Response): Promise<void> => {
+
+  mintNFT = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
     const id = Number(req.params.nftId);
-    const nft = await this.service.mintNFT(id);
-    if (nft == null) {
-      res.status(404).send("NFT not found");
-    } else {
-      res.status(200).json({ id: nft });
-    }
+    this.service
+      .mintNFT(id)
+      .then((nftId) => res.status(200).json({ nftId: nftId }))
+      .catch((err) => next(err));
   };
 
-  getAllNfts = async (req: Request, res: Response): Promise<void> => {
-    const nfts = await this.service.getAllNFTs();
-    // map nfts to NFTItem
-    const nftItems = await Promise.all(
-      nfts.map(async (nft) => {
-        return await NftUtils.mapNftToNftResponse(nft);
+  getAllNfts = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    this.service
+      .getAllNFTs()
+      .then((nfts) => {
+        res.status(200).json({
+          nfts: nfts.map((nft) => MapperUtils.mapNftToNftResponse(nft)),
+        });
       })
-    );
-    res.status(200).json(nftItems);
+      .catch((err) => next(err));
   };
 
-  getNFTById = async (req: Request, res: Response): Promise<void> => {
+  getNFTById = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
     const nftId = Number(req.params.nftId);
-    const nft = await this.service.getNFTById(nftId);
-    if (nft != null) {
-      // map to NFTItem
-      res.status(200).json(await NftUtils.mapNftToNftResponse(nft));
-    } else {
-      res.status(404).json({ message: "NFT not found" });
-    }
+    this.service
+      .getNFTById(nftId)
+      .then((nft) => res.status(200).json(MapperUtils.mapNftToNftResponse(nft)))
+      .catch((err) => next(err));
   };
 
-  getNFTMintStatus = async (req: Request, res: Response): Promise<void> => {
-    const result = await this.service.checkMintingProcess(
-      Number(req.params.nftId)
-    );
-    if (result != null) {
-      res.status(200).json({ isMinted: result });
-    } else {
-      res.status(404).json({ message: "No nft found with this id" });
-    }
+  getNFTMintStatus = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    await this.service
+      .checkMintingProcess(Number(req.params.nftId))
+      .then((isMinted) => res.status(200).json({ isMinted: isMinted }))
+      .catch((err) => next(err));
   };
 }

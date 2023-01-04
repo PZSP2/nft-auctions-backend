@@ -9,14 +9,11 @@ import {
   NFTokenAcceptOffer,
   NFTokenCreateOffer,
   NFTokenMint,
+  NFTSellOffersRequest,
+  NFTSellOffersResponse,
   TxResponse,
   Wallet,
 } from "xrpl";
-import SellOfferInfoModel from "../models/sellOfferInfoModel";
-import BuyOfferInfoModel from "../models/buyOfferInfoModel";
-import AcceptOfferDTO from "../models/acceptOfferDTO";
-
-// TODO REFATOR ALL THIS
 enum NetType {
   MainNet = "wss://s1.ripple.com/",
   TestNet = "wss://s.altnet.rippletest.net/",
@@ -63,34 +60,15 @@ export default class XrpLedgerAdapter {
 
   getBalance = async (walletAddress: string): Promise<number> =>
     Number(await this.client.getXrpBalance(walletAddress));
-  createSellOffer = async (
-    sellOffer: SellOfferInfoModel,
-    wallet: Wallet
-  ): Promise<TxResponse> => {
-    const offer: NFTokenCreateOffer = {
-      Account: sellOffer.accountAddress,
-      TransactionType: "NFTokenCreateOffer",
-      NFTokenID: sellOffer.nftTokenId,
-      Amount: sellOffer.amount.toFixed(0),
-      Destination: sellOffer.destinationAddress,
-      Flags: 0x00000001,
-    };
-    return await this.client.submitAndWait(offer, { wallet: wallet });
-  };
 
-  createBuyOffer = async (
-    buyOffer: BuyOfferInfoModel,
+  createSellOffer = async (
+    sellOffer: NFTokenCreateOffer,
     wallet: Wallet
   ): Promise<TxResponse> => {
-    const offer: NFTokenCreateOffer = {
-      Account: buyOffer.accountAddress,
-      TransactionType: "NFTokenCreateOffer",
-      Owner: buyOffer.ownerAddress,
-      NFTokenID: buyOffer.nftTokenId,
-      Amount: buyOffer.amount.toFixed(0),
-    };
-    console.log("Creating buy offer");
-    return await this.client.submitAndWait(offer, { wallet: wallet });
+    return await this.client.submitAndWait(sellOffer, {
+      autofill: true,
+      wallet: wallet,
+    });
   };
 
   mintNFT = async (uri: string, wallet: Wallet): Promise<TxResponse> => {
@@ -101,63 +79,58 @@ export default class XrpLedgerAdapter {
       Flags: 0x00000008,
       NFTokenTaxon: 0,
     };
-    return await this.client.submitAndWait(mintTransaction, { wallet: wallet });
+    return await this.client.submitAndWait(mintTransaction, {
+      autofill: true,
+      wallet: wallet,
+    });
   };
 
-  getNftOffersByNftId = async (
-    nftId: string
-  ): Promise<NFTBuyOffersResponse | null> => {
+  getNftsBuyOffers = async (nftId: string): Promise<NFTBuyOffersResponse> => {
     const request: NFTBuyOffersRequest = {
       command: "nft_buy_offers",
       nft_id: nftId,
     };
-    return await this.client.request(request).catch((err) => {
-      console.log(err);
-      return null;
-    });
+    return await this.client.request(request);
+  };
+
+  getNftsSellOffers = async (nftId: string): Promise<NFTSellOffersResponse> => {
+    const request: NFTSellOffersRequest = {
+      command: "nft_sell_offers",
+      nft_id: nftId,
+    };
+    return await this.client.request(request);
   };
 
   getOffersByAccount = async (
     accountAddress: string
   ): Promise<AccountOffersResponse | null> =>
-    await this.client
-      .request({
-        command: "account_offers",
-        account: accountAddress,
+    await this.client.request({
+      command: "account_offers",
+      account: accountAddress,
+    });
+
+  acceptNftOffer = (
+    offer: NFTokenAcceptOffer,
+    wallet: Wallet,
+    callback: (result: TxResponse | null) => void
+  ): void => {
+    this.client
+      .submitAndWait(offer, { autofill: true, wallet: wallet })
+      .then((res) => {
+        callback(res);
       })
       .catch((err) => {
         console.log(err);
-        return null;
-      });
-
-  acceptNftOffer = (offer: AcceptOfferDTO, wallet: Wallet): void => {
-    const transactionBlob: NFTokenAcceptOffer = {
-      TransactionType: "NFTokenAcceptOffer",
-      Account: offer.brokerAddress,
-      NFTokenSellOffer: offer.ownerSellOfferID,
-      NFTokenBuyOffer: offer.winningBuyOfferID,
-      NFTokenBrokerFee: offer.brokerFee.toString(),
-    };
-    this.client
-      .submitAndWait(transactionBlob, { wallet: wallet })
-      .then((res) => {
-        console.log(`Submitted transaction ${res}`);
-      })
-      .catch((err) => {
-        console.log(`Error during accepting transaction: ${err}`);
+        callback(null);
       });
   };
 
-  fundWallet = async (
-    seed: string | null
-  ): Promise<Wallet | { wallet: Wallet; balance: number }> => {
+  fundWallet = async (seed: string | null): Promise<Wallet> => {
     console.log("Funding wallet");
-    if (seed != null) {
-      return Wallet.fromSeed(seed);
-    } else {
-      console.log("Funding a new wallet");
-      return await this.client.fundWallet();
-    }
+    const wallet = await (seed != null
+      ? Wallet.fromSeed(seed)
+      : this.client.fundWallet());
+    return wallet instanceof Wallet ? wallet : (await wallet).wallet;
   };
 
   getAccountNFTsResponse = async (
