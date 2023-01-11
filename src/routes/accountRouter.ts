@@ -16,19 +16,9 @@ const accountController = new AccountController(accountService);
 
 export const accountRouter = Router();
 
-accountRouter.post(
-  "/:accountId/wallet",
-  protectedPath,
-  schemaValidator({ schema: accountIdParams }),
-  accountController.fundWallet
-);
+accountRouter.post("/wallet", protectedPath, accountController.fundWallet);
 
-accountRouter.get(
-  "/:accountId/wallet",
-  protectedPath,
-  schemaValidator({ schema: accountIdParams }),
-  accountController.getWallet
-);
+accountRouter.get("/wallet", protectedPath, accountController.getWallet);
 
 accountRouter.get(
   "/:accountId",

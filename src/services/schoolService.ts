@@ -17,8 +17,18 @@ export default class SchoolService {
       include: {
         auctions: {
           include: {
-            nft: true,
-            bids: true,
+            nft: {
+                include: {
+                    owner: true,
+                  issuer: true,
+
+                }
+            },
+            bids: {
+                include: {
+                    bidder: true
+                }
+            },
           },
         },
       },
@@ -36,7 +46,11 @@ export default class SchoolService {
         auctions: {
           include: {
             nft: true,
-            bids: true,
+            bids: {
+              include: {
+                bidder: true,
+              }
+            },
           },
         },
       },

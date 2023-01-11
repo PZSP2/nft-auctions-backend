@@ -12,6 +12,7 @@ import CreateAccountDto from "../models/account/createAccountDTO";
 import { Wallet } from "xrpl";
 import AuthUtils from "../utils/AuthUtils";
 import ResourceNotFoundError from "../errors/resourceNotFoundError";
+import WalletError from "../errors/WalletError";
 
 export default class AccountService {
   private prisma: PrismaClient;
@@ -70,7 +71,7 @@ export default class AccountService {
   ): Promise<void> => {
     const account = await this.getAccountByAccountId(accountId);
     if (account.wallet_address != null)
-      throw new Error("Account already has a wallet");
+      throw new WalletError("Account already has a wallet");
     this.ledger
       .fundWallet(null)
       .then(async (wallet: Wallet | { wallet: Wallet; balance: number }) => {

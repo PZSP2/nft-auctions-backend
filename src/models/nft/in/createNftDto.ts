@@ -8,11 +8,6 @@ export default interface CreateNftDto {
   readonly description: string;
 }
 export const createNftSchema: Schema = {
-  accountId: {
-    in: "body",
-    notEmpty: true,
-    errorMessage: "accountId is required",
-  },
   name: {
     in: "body",
     notEmpty: true,

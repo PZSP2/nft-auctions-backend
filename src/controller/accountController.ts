@@ -39,7 +39,7 @@ export default class AccountController {
     res: Response,
     next: (err: Error) => void
   ): Promise<void> => {
-    const accountId = req.params.accountId as unknown as number;
+    const accountId = (req.user as User).id;
     this.service
       .fundAccountWallet(accountId, this.service.onWalletFunded)
       .then((wallet) => res.status(200).json(wallet))
@@ -79,7 +79,7 @@ export default class AccountController {
     res: Response,
     next: (err: Error) => void
   ): Promise<void> => {
-    const accountId = req.params.accountId as unknown as number;
+    const accountId = (req.user as User).id;
     this.service
       .getAccountBalance(accountId)
       .then((balance) =>
