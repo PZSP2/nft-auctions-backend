@@ -88,4 +88,22 @@ export default class AccountController {
       )
       .catch((err) => next(err));
   };
+
+  checkAuctionToConfirm = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const accountId = (req.user as User).id;
+    this.service
+      .checkAuctionsToConfirm(accountId)
+      .then((auctions) =>
+        res.status(200).json({
+          auctions: auctions.map((auction) =>
+            MapperUtils.mapToAuctionToConfirm(auction)
+          ),
+        })
+      )
+      .catch((err) => next(err));
+  };
 }

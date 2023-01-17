@@ -16,6 +16,12 @@ const accountController = new AccountController(accountService);
 
 export const accountRouter = Router();
 
+accountRouter.get(
+  "/auctions/ended",
+  protectedPath,
+  accountController.checkAuctionToConfirm
+);
+
 accountRouter.post("/wallet", protectedPath, accountController.fundWallet);
 
 accountRouter.get("/wallet", protectedPath, accountController.getWallet);

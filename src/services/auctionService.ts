@@ -248,7 +248,7 @@ export default class AuctionService {
     if (auction.nft.owner_id !== accountId)
       throw new NotAuthorizedError("User has to be issuer of the NFT");
     const highestBid = await this.getHighestBid(auctionId);
-    if (auction.status == Status.WON || highestBid == null)
+    if (auction.status != Status.WON || highestBid == null)
       throw new AuctionConfirmError("Auction is not won");
     const nftToken = auction.nft.ledgerId ?? "";
     const buyer = highestBid.bidder_id;

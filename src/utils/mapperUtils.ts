@@ -10,6 +10,7 @@ import MinimalSchoolResponse from "../models/school/minimalSchoolResponse";
 import SchoolResponse from "../models/school/schoolResponse";
 import TagResponse from "../models/nft/out/tagResponse";
 import { NFTWithTags, NFTWithTagsAndIssuer } from "../models/types";
+import AuctionToConfirm from "../models/account/auctionToConfrim";
 
 export default class MapperUtils {
   static mapNftToNftResponse = (
@@ -159,6 +160,25 @@ export default class MapperUtils {
         school.auctions?.map((auction) =>
           this.mapAuctionToMinimalAuctionResponse(auction)
         ) ?? [],
+    };
+  }
+
+  static mapToAuctionToConfirm(
+    auction: Auction & {
+      nft: NFT;
+      bids?: Bid[];
+    }
+  ): AuctionToConfirm {
+    const winningBid =
+      auction.bids?.length ?? 0 > 0
+        ? auction.bids?.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
+        : undefined;
+
+    return {
+      auctionId: auction.id,
+      nftId: auction.nft_id,
+      nftName: auction.nft.name,
+      finalPrice: winningBid?.bid_price,
     };
   }
 }

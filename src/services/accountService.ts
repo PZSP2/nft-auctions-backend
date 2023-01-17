@@ -5,6 +5,7 @@ import {
   PrismaClient,
   Role,
   School,
+  Status,
   Tag,
   User,
 } from "@prisma/client";
@@ -171,6 +172,22 @@ export default class AccountService {
       },
     });
   };
+
+  checkAuctionsToConfirm = async (userId: number) =>
+    this.prisma.auction.findMany({
+      where: {
+        status: Status.WON,
+        nft: {
+          issuer: {
+            id: userId,
+          },
+        },
+      },
+      include: {
+        nft: true,
+        bids: true,
+      },
+    });
 
   getAccountBalance = async (
     accountId: number
