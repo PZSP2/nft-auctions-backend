@@ -55,9 +55,7 @@ export default class AccountController {
     const account = req.body;
     this.service
       .updateAccount(accountId, account)
-      .then((account) =>
-        res.status(200).json(MapperUtils.mapUserToAccountResponse(account))
-      )
+      .then(() => res.status(200))
       .catch((err) => next(err));
   };
 

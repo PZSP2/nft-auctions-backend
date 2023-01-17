@@ -1,6 +1,10 @@
 import { PrismaClient, School } from "@prisma/client";
-import CreateSchoolDto from "../models/school/createSchoolDto";
+import CreateSchoolDto from "../models/school/in/createSchoolDto";
 import ResourceNotFoundError from "../errors/resourceNotFoundError";
+import {
+  AuctionWithNFTAndBids,
+  AuctionWithNFTWithoutIssuerAndBids,
+} from "../models/types";
 
 export default class SchoolService {
   private prisma: PrismaClient;
@@ -9,7 +13,9 @@ export default class SchoolService {
     this.prisma = prisma;
   }
 
-  getSchoolById = async (schoolId: number): Promise<School> => {
+  getSchoolById = async (
+    schoolId: number
+  ): Promise<School & { auctions: AuctionWithNFTAndBids[] }> => {
     const school = await this.prisma.school.findFirst({
       where: {
         id: schoolId,
@@ -18,16 +24,16 @@ export default class SchoolService {
         auctions: {
           include: {
             nft: {
-                include: {
-                    owner: true,
-                  issuer: true,
-
-                }
+              include: {
+                owner: true,
+                issuer: true,
+                tags: true,
+              },
             },
             bids: {
-                include: {
-                    bidder: true
-                }
+              include: {
+                bidder: true,
+              },
             },
           },
         },
@@ -40,16 +46,23 @@ export default class SchoolService {
     return school;
   };
 
-  getAllSchools = async (): Promise<School[]> =>
+  getAllSchools = async (): Promise<
+    (School & { auctions: AuctionWithNFTWithoutIssuerAndBids[] })[]
+  > =>
     await this.prisma.school.findMany({
       include: {
         auctions: {
           include: {
-            nft: true,
+            nft: {
+              include: {
+                tags: true,
+                issuer: true,
+              },
+            },
             bids: {
               include: {
                 bidder: true,
-              }
+              },
             },
           },
         },

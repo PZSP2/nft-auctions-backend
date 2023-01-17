@@ -8,4 +8,6 @@ export default interface MinimalNftResponse {
   readonly uri: string;
 
   readonly isImage: boolean;
+
+  readonly tags: string[];
 }

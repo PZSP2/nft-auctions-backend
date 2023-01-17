@@ -7,7 +7,7 @@ import schemaValidator from "../middleware/schemaValidator";
 import {
   createSchoolSchema,
   schoolIdSchema,
-} from "../models/school/createSchoolDto";
+} from "../models/school/in/createSchoolDto";
 
 export const schoolRouter = Router();
 

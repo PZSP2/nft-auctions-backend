@@ -1,4 +1,5 @@
 import { MinimalAccountResponse } from "../../account/minimalAccountResponse";
+import TagResponse from "./tagResponse";
 
 export default interface NftResponse {
   readonly nftId: number;
@@ -7,10 +8,12 @@ export default interface NftResponse {
 
   readonly description?: string;
 
-  readonly fileUri?: string;
+  readonly uri?: string;
 
   readonly isImage: boolean;
   readonly owner?: MinimalAccountResponse;
 
   readonly issuer?: MinimalAccountResponse;
+
+  readonly tags: TagResponse[];
 }

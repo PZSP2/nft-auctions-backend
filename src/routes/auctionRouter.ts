@@ -3,13 +3,13 @@ import { Router } from "express";
 import AuctionController from "../controller/auctionController";
 import AuctionService from "../services/auctionService";
 import { protectedPath } from "../middleware/passportMiddleware";
-import {
-  auctionIdSchema,
-  createAuctionSchema,
-  getAllAuctionsSchema,
-} from "../models/auction/in/createAuctionDTO";
+import { createAuctionSchema } from "../models/auction/in/createAuctionDTO";
 import schemaValidator from "../middleware/schemaValidator";
 import { auctionBidSchema } from "../models/auction/in/auctionBidDTO";
+import {
+  auctionIdSchema,
+  getAllAuctionsSchema,
+} from "../models/auction/in/auctionQuerySchema";
 
 const auctionService = new AuctionService(new PrismaClient());
 const auctionController = new AuctionController(auctionService);

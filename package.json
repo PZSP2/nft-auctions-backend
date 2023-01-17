@@ -28,7 +28,7 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
-    "@prisma/client": "4.7.1",
+    "@prisma/client": "^4.9.0",
     "@tsed/multipartfiles": "^5.65.9",
     "bcryptjs": "^2.4.3",
     "cross-fetch": "^3.1.5",
@@ -45,7 +45,7 @@
     "node-schedule": "^2.1.0",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
-    "prisma": "^4.7.1",
+    "prisma": "^4.9.0",
     "uint8arraylist": "^2.4.3",
     "xrpl": "^2.6.0"
   }

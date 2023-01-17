@@ -5,8 +5,8 @@ import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
 import { PrismaClient } from "@prisma/client";
 import { createNftSchema } from "../models/nft/in/createNftDto";
 import { protectedPath } from "../middleware/passportMiddleware";
-import { nftIdSchema } from "../models/nft/in/mintNftDto";
 import schemaValidator from "../middleware/schemaValidator";
+import { nftIdSchema, nftQuerySchema } from "../models/nft/in/nftQuerySchema";
 
 export const NFTRouter = Router();
 
@@ -21,7 +21,11 @@ NFTRouter.post(
   schemaValidator({ schema: createNftSchema }),
   controller.uploadNft
 );
-NFTRouter.get("/", controller.getAllNfts);
+NFTRouter.get(
+  "",
+  schemaValidator({ schema: nftQuerySchema }),
+  controller.getAllNfts
+);
 NFTRouter.get(
   "/:nftId",
   schemaValidator({ schema: nftIdSchema }),

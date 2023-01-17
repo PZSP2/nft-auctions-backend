@@ -1,4 +1,4 @@
-import { Auction, Bid, NFT, Role, School, User } from "@prisma/client";
+import { Auction, Bid, NFT, Role, School, Tag, User } from "@prisma/client";
 import NftResponse from "../models/nft/out/nftResponse";
 import AccountResponse from "../models/account/accountResponse";
 import { MinimalAccountResponse } from "../models/account/minimalAccountResponse";
@@ -8,15 +8,17 @@ import MinimalAuctionResponse from "../models/auction/out/minimalAuctionResponse
 import MinimalNftResponse from "../models/nft/out/minimalNftResponse";
 import MinimalSchoolResponse from "../models/school/minimalSchoolResponse";
 import SchoolResponse from "../models/school/schoolResponse";
+import TagResponse from "../models/nft/out/tagResponse";
+import { NFTWithTags, NFTWithTagsAndIssuer } from "../models/types";
 
 export default class MapperUtils {
   static mapNftToNftResponse = (
-    nft: NFT & { issuer: User; owner: User }
+    nft: NFT & { issuer: User; owner: User; tags: Tag[] }
   ): NftResponse => ({
     nftId: nft.id,
     name: nft.name,
     description: nft.description != null ? nft.description : undefined,
-    fileUri: nft.uri,
+    uri: nft.uri,
     isImage: nft.is_image,
     issuer:
       nft.issuer != null
@@ -26,6 +28,7 @@ export default class MapperUtils {
       nft.owner != null
         ? MapperUtils.mapUserToMinimalUserResponse(nft.owner)
         : undefined,
+    tags: nft.tags.map((tag) => this.mapTagToTagResponse(tag)),
   });
 
   static mapUserToMinimalUserResponse(user: User): MinimalAccountResponse {
@@ -37,8 +40,8 @@ export default class MapperUtils {
 
   static mapUserToAccountResponse(
     user: User & {
-      owned_nft?: NFT[];
-      bid?: (Bid & { auction: Auction & { nft: NFT } })[];
+      owned_nft?: NFTWithTags[];
+      bid?: (Bid & { auction: Auction & { nft: NFTWithTagsAndIssuer } })[];
     }
   ): AccountResponse {
     return {
@@ -55,18 +58,33 @@ export default class MapperUtils {
     };
   }
 
-  static mapNftToMinimalResponse(nft: NFT): MinimalNftResponse {
+  static mapNftToMinimalResponse(nft: NFTWithTags): MinimalNftResponse {
     return {
       nftId: nft.id,
       name: nft.name,
       description: nft.description ?? "",
       uri: nft.uri,
       isImage: nft.is_image,
+      tags: nft.tags.map((tag) => this.mapTagToString(tag)),
     };
   }
 
+  static mapTagToTagResponse(tag: Tag): TagResponse {
+    return {
+      tagId: tag.id,
+      name: tag.name,
+    };
+  }
+
+  static mapTagToString(tag: Tag): string {
+    return tag.name;
+  }
+
   static mapAuctionToMinimalAuctionResponse(
-    auction: Auction & { nft: NFT; bids?: (Bid & { bidder: User })[] }
+    auction: Auction & {
+      nft: NFTWithTagsAndIssuer;
+      bids?: (Bid & { bidder: User })[];
+    }
   ): MinimalAuctionResponse {
     const winningBid = auction.bids?.reduce((a, b) =>
       a.timestamp > b.timestamp ? a : b
@@ -78,11 +96,17 @@ export default class MapperUtils {
       nftName: auction.nft.name,
       nftUri: auction.nft.uri,
       status: auction.status,
+      nftId: auction.nft_id,
+      nftTags: auction.nft.tags.map((tag) => this.mapTagToString(tag)),
+      nftIssuer: auction.nft.issuer.name ?? "",
     };
   }
 
   static mapAuctionToAuctionResponse(
-    auction: Auction & { bids?: (Bid & { bidder: User })[]; nft: NFT }
+    auction: Auction & {
+      bids?: (Bid & { bidder: User })[];
+      nft: NFT & { tags: Tag[] };
+    }
   ): AuctionResponse {
     const winningBid =
       auction.bids?.length ?? 0 > 0
@@ -123,7 +147,7 @@ export default class MapperUtils {
   }
 
   static mapSchoolToSchoolResponse(
-    school: School & { auctions?: (Auction & { nft: NFT })[] }
+    school: School & { auctions?: (Auction & { nft: NFTWithTagsAndIssuer })[] }
   ): SchoolResponse {
     return {
       schoolId: school.id,

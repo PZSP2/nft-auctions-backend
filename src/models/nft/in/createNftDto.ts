@@ -1,12 +1,17 @@
 import { Schema } from "express-validator";
 
-export default interface CreateNftDto {
+export default interface createNftDto {
   readonly accountId: number;
 
-  readonly name: number;
+  readonly name: string;
 
   readonly description: string;
+
+  readonly uri: string;
+
+  readonly tags: number[];
 }
+
 export const createNftSchema: Schema = {
   name: {
     in: "body",
@@ -23,5 +28,12 @@ export const createNftSchema: Schema = {
       options: (value, { req }) => req.file != null,
       errorMessage: "file is required",
     },
+  },
+  tags: {
+    in: "body",
+    isArray: true,
+    optional: true,
+    toArray: true,
+    errorMessage: "tagsIds must be an array",
   },
 };

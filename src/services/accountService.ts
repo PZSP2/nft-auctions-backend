@@ -5,6 +5,7 @@ import {
   PrismaClient,
   Role,
   School,
+  Tag,
   User,
 } from "@prisma/client";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
@@ -13,6 +14,7 @@ import { Wallet } from "xrpl";
 import AuthUtils from "../utils/AuthUtils";
 import ResourceNotFoundError from "../errors/resourceNotFoundError";
 import WalletError from "../errors/WalletError";
+import { NFTWithTags, NFTWithTagsAndIssuer } from "../models/types";
 
 export default class AccountService {
   private prisma: PrismaClient;
@@ -27,18 +29,27 @@ export default class AccountService {
     accountId: number
   ): Promise<
     User & {
-      owned_nft: NFT[];
-      bid: (Bid & { auction: Auction & { nft: NFT } })[];
+      owned_nft: NFTWithTags[];
+      bid: (Bid & { auction: Auction & { nft: NFTWithTagsAndIssuer } })[];
     }
   > => {
     const account = await this.prisma.user.findFirst({
       include: {
-        owned_nft: true,
+        owned_nft: {
+          include: {
+            tags: true,
+          },
+        },
         bid: {
           include: {
             auction: {
               include: {
-                nft: true,
+                nft: {
+                  include: {
+                    tags: true,
+                    issuer: true,
+                  },
+                },
               },
             },
           },
@@ -98,7 +109,7 @@ export default class AccountService {
     account: CreateAccountDto
   ): Promise<
     User & {
-      owned_nft: NFT[];
+      owned_nft: (NFT & { tags: Tag[] })[];
       bid: (Bid & { auction: Auction & { nft: NFT } })[];
     }
   > =>
@@ -111,7 +122,11 @@ export default class AccountService {
         password: account.password,
       },
       include: {
-        owned_nft: true,
+        owned_nft: {
+          include: {
+            tags: true,
+          },
+        },
         bid: {
           include: {
             auction: {

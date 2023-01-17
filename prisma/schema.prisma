@@ -1,10 +1,9 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-
 generator client {
   provider = "prisma-client-js"
-  output = "../node_modules/.prisma/client"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -40,8 +39,14 @@ model User {
   owned_nft       NFT[]   @relation("owned_nft")
 }
 
+model Tag {
+  id        Int         @id @default(autoincrement())
+  name      String
+  nfts      NFT[]
+}
+
 model NFT {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   ledgerId    String?
   name        String
   uri         String
@@ -49,10 +54,11 @@ model NFT {
   is_image    Boolean
   issuer_id   Int
   owner_id    Int
-  owner       User      @relation("owned_nft", fields: [owner_id], references: [id])
-  issuer      User      @relation(name: "issued_nft", fields: [issuer_id], references: [id])
+  owner       User        @relation("owned_nft", fields: [owner_id], references: [id])
+  issuer      User        @relation(name: "issued_nft", fields: [issuer_id], references: [id])
   auctions    Auction[]
-  transferred Boolean   @default(false)
+  transferred Boolean     @default(false)
+  tags        Tag[]
 }
 
 model Auction {
@@ -81,12 +87,12 @@ model Bid {
 }
 
 model School {
-  id      Int       @id @default(autoincrement())
-  name    String
-  country String
-  city    String
-  address String
-  phone   String
-  email   String    @unique
+  id       Int       @id @default(autoincrement())
+  name     String
+  country  String
+  city     String
+  address  String
+  phone    String
+  email    String    @unique
   auctions Auction[]
 }

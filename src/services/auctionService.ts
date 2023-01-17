@@ -1,4 +1,12 @@
-import { Auction, Bid, NFT, PrismaClient, Status, User } from "@prisma/client";
+import {
+  Auction,
+  Bid,
+  NFT,
+  PrismaClient,
+  Status,
+  Tag,
+  User,
+} from "@prisma/client";
 import AuctionBidDTO from "../models/auction/in/auctionBidDTO";
 import { CreateAuctionDTO } from "../models/auction/in/createAuctionDTO";
 import BidError from "./BidError";
@@ -10,6 +18,11 @@ import AuctionConfirmError from "../errors/auctionConfirmError";
 import AuctionStatusError from "../errors/auctionStatusError";
 import { ScheduleUtils } from "../utils/scheduleUtils";
 import NftCreateError from "../errors/nftCreateError";
+import {
+  BidWithBidder,
+  NFTWithTags,
+  NFTWithTagsAndIssuer,
+} from "../models/types";
 
 export default class AuctionService {
   private readonly prisma: PrismaClient;
@@ -21,19 +34,34 @@ export default class AuctionService {
 
   getAllAuctions = async (
     schoolId: number | undefined,
-    isActive: boolean | undefined,
-    nftId: number | undefined
-  ): Promise<(Auction & { nft: NFT; bids: (Bid & { bidder: User })[] })[]> =>
+    status: Status | undefined,
+    nftId: number | undefined,
+    issuerId: number | undefined,
+    tagId: number | undefined
+  ): Promise<(Auction & { nft: NFTWithTags; bids: BidWithBidder[] })[]> =>
     this.prisma.auction.findMany({
       where: {
         status: {
-          equals: isActive ? Status.ACTIVE : undefined,
+          equals: status ?? undefined,
         },
+
         nft_id: nftId,
         school_id: schoolId,
+        nft: {
+          issuer_id: issuerId,
+          tags: {
+            some: {
+              id: tagId,
+            },
+          },
+        },
       },
       include: {
-        nft: true,
+        nft: {
+          include: {
+            tags: true,
+          },
+        },
         bids: {
           include: {
             bidder: true,
@@ -46,8 +74,8 @@ export default class AuctionService {
     auctionId: number
   ): Promise<
     Auction & {
-      nft: NFT & { issuer: User; owner: User };
-      bids: (Bid & { bidder: User })[];
+      nft: NFT & { issuer: User; owner: User; tags: Tag[] };
+      bids: BidWithBidder[];
     }
   > => {
     const auction = await this.prisma.auction.findFirst({
@@ -64,6 +92,7 @@ export default class AuctionService {
           include: {
             issuer: true,
             owner: true,
+            tags: true,
           },
         },
       },
@@ -163,7 +192,7 @@ export default class AuctionService {
   createAuction = async (
     createAuctionDTO: CreateAuctionDTO,
     sellerId: number
-  ): Promise<Auction & { nft: NFT }> => {
+  ): Promise<Auction & { nft: NFTWithTagsAndIssuer }> => {
     const nft = await this.prisma.nFT.findFirst({
       where: {
         id: createAuctionDTO.nftId,
@@ -186,7 +215,13 @@ export default class AuctionService {
         status: Status.ACTIVE,
       },
       include: {
-        nft: true,
+        nft: {
+          include: {
+            issuer: true,
+            tags: true,
+          },
+        },
+        school: true,
       },
     });
 
@@ -213,7 +248,8 @@ export default class AuctionService {
     if (auction.nft.owner_id !== accountId)
       throw new NotAuthorizedError("User has to be issuer of the NFT");
     const highestBid = await this.getHighestBid(auctionId);
-    if (highestBid == null) throw new AuctionConfirmError("Auction is not won");
+    if (auction.status == Status.WON || highestBid == null)
+      throw new AuctionConfirmError("Auction is not won");
     const nftToken = auction.nft.ledgerId ?? "";
     const buyer = highestBid.bidder_id;
     const seller = auction.nft.issuer_id;

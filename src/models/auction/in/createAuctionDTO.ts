@@ -40,33 +40,3 @@ export const createAuctionSchema: Schema = {
     toInt: true,
   },
 };
-
-export const auctionIdSchema: Schema = {
-  auctionId: {
-    in: "params",
-  },
-};
-
-export const getAllAuctionsSchema: Schema = {
-  schoolId: {
-    in: "query",
-    optional: true,
-    isInt: true,
-    toInt: true,
-    errorMessage: "School id must be integer",
-  },
-  isActive: {
-    in: "query",
-    optional: true,
-    isBoolean: true,
-    toBoolean: true,
-    errorMessage: "isActive must be a boolean",
-  },
-  nftId: {
-    in: "query",
-    optional: true,
-    isInt: true,
-    toInt: true,
-    errorMessage: "nftId must be an integer",
-  },
-};

@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import NFTService from "../services/NFTService";
 import multer, { FileFilterCallback } from "multer";
 import MapperUtils from "../utils/mapperUtils";
-import mintNftDto from "../models/nft/in/mintNftDto";
 import IpfsUtils from "../utils/ipfsUtils";
 import NftCreateError from "../errors/nftCreateError";
 import { User } from "@prisma/client";
+import createNftDto from "../models/nft/in/createNftDto";
 
 export default class NFTController {
   service: NFTService;
@@ -53,11 +53,12 @@ export default class NFTController {
         next(new NftCreateError("NFT already exists"));
         return;
       }
-      const nftInfo: mintNftDto = {
+      const nftInfo: createNftDto = {
         accountId: (req.user as User).id,
         description: req.body.description,
         name: req.body.name,
         uri: uri,
+        tags: req.body.tags,
       };
       this.service
         .createNFT(nftInfo, req.file)
@@ -86,7 +87,13 @@ export default class NFTController {
     next: (err: Error) => void
   ): Promise<void> => {
     this.service
-      .getAllNFTs()
+      .getAllNFTs(
+        req.query.name as unknown as string,
+        req.query.schoolId as unknown as number,
+        req.query.issuerId as unknown as number,
+        req.query.ownerId as unknown as number,
+        req.query.tagId as unknown as number
+      )
       .then((nfts) => {
         res.status(200).json({
           nfts: nfts.map((nft) => MapperUtils.mapNftToNftResponse(nft)),

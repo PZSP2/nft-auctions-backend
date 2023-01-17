@@ -1,7 +1,7 @@
 import AuctionService from "../services/auctionService";
 import { Request, Response } from "express";
 import MapperUtils from "../utils/mapperUtils";
-import { User } from "@prisma/client";
+import { Status, User } from "@prisma/client";
 import AuctionBidDTO from "../models/auction/in/auctionBidDTO";
 export default class AuctionController {
   private readonly service: AuctionService;
@@ -32,8 +32,10 @@ export default class AuctionController {
     this.service
       .getAllAuctions(
         req.query.schoolId as unknown as number,
-        req.query.isActivated as unknown as boolean,
-        req.query.nftId as unknown as number
+        Status[req.query.status as keyof typeof Status],
+        req.query.nftId as unknown as number,
+        req.query.issuerId as unknown as number,
+        req.query.nftTagId as unknown as number
       )
       .then((auctions) =>
         res.status(200).json({

@@ -1,11 +1,11 @@
-import { NFT, PrismaClient, User } from "@prisma/client";
+import { NFT, PrismaClient, Tag, User } from "@prisma/client";
 import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
 import { convertStringToHex, NFTokenCreateOffer } from "xrpl";
 import IpfsUtils from "../utils/ipfsUtils";
 import NftCreateError from "../errors/nftCreateError";
 import ResourceNotFoundError from "../errors/resourceNotFoundError";
 import NotAuthorizedError from "../errors/notAuthorizedError";
-import mintNftDto from "../models/nft/in/mintNftDto";
+import createNftDto from "../models/nft/in/createNftDto";
 
 export default class NFTService {
   private ledger: XrpLedgerAdapter;
@@ -16,24 +16,42 @@ export default class NFTService {
     this.prisma = prisma;
   }
 
-  getNFTIssuedByAccount = async (accountID: number): Promise<NFT[]> =>
+  getAllNFTs = async (
+    name: string | undefined,
+    schoolId: number | undefined,
+    issuerId: number | undefined,
+    ownerId: number | undefined,
+    tagId: number | undefined
+  ): Promise<(NFT & { issuer: User; owner: User; tags: Tag[] })[]> =>
     this.prisma.nFT.findMany({
       where: {
-        issuer_id: accountID,
+        issuer_id: issuerId,
+        owner_id: ownerId,
+        auctions: {
+          some: {
+            school_id: schoolId,
+          },
+        },
+        name: {
+          contains: name ?? undefined,
+          mode: "insensitive",
+        },
+        tags: {
+          some: {
+            id: tagId,
+          },
+        },
       },
-    });
-
-  getAllNFTs = async (): Promise<(NFT & { issuer: User; owner: User })[]> =>
-    this.prisma.nFT.findMany({
       include: {
         issuer: true,
         owner: true,
+        tags: true,
       },
     });
 
   getNFTById = async (
     nftId: number
-  ): Promise<NFT & { issuer: User; owner: User }> => {
+  ): Promise<NFT & { issuer: User; owner: User; tags: Tag[] }> => {
     const nft = await this.prisma.nFT.findFirst({
       where: {
         id: nftId,
@@ -41,6 +59,7 @@ export default class NFTService {
       include: {
         issuer: true,
         owner: true,
+        tags: true,
       },
     });
     if (nft == null)
@@ -49,10 +68,11 @@ export default class NFTService {
   };
 
   createNFT = async (
-    nftInfo: mintNftDto,
+    nftInfo: createNftDto,
     file: Express.Multer.File
-  ): Promise<NFT & { issuer: User; owner: User }> => {
+  ): Promise<NFT & { issuer: User; owner: User; tags: Tag[] }> => {
     const uri = await IpfsUtils.ipfsFileUpload(file);
+    const tags = nftInfo?.tags?.map((tagId) => ({ id: Number(tagId) })) ?? [];
     return this.prisma.nFT.create({
       data: {
         name: nftInfo.name,
@@ -61,10 +81,14 @@ export default class NFTService {
         description: nftInfo.description,
         owner_id: Number(nftInfo.accountId),
         is_image: file.mimetype.startsWith("image"),
+        tags: {
+          connect: tags,
+        },
       },
       include: {
         issuer: true,
         owner: true,
+        tags: true,
       },
     });
   };

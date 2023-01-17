@@ -10,5 +10,11 @@ export default interface MinimalAuctionResponse {
 
   readonly nftName: string;
 
+  readonly nftTags: string[];
+
+  readonly nftIssuer: string;
+
   readonly nftUri: string;
+
+  readonly nftId: number;
 }

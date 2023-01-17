@@ -51,3 +51,10 @@ export const schoolIdSchema: Schema = {
     toInt: true,
   },
 };
+
+export const getSchoolsSchema: Schema = {
+  name: {
+    in: "query",
+    optional: true,
+  },
+};

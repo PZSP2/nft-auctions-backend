@@ -11,6 +11,7 @@ import passport from "passport";
 import { schoolRouter } from "./routes/schoolRouter";
 import { onError } from "./middleware/errorMiddleware";
 import { ScheduleUtils } from "./utils/scheduleUtils";
+import { tagRouter } from "./routes/tagRouter";
 
 const app = express();
 const PORT = 3000;
@@ -36,6 +37,7 @@ app.use("/account/", accountRouter);
 app.use("/auction/", auctionRouter);
 app.use("/auth/", authRouter);
 app.use("/school/", schoolRouter);
+app.use("/tag/", tagRouter);
 
 app.use(onError);
 
