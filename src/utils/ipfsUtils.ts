@@ -23,6 +23,7 @@ export default class IpfsUtils {
       });
       return fileAdded.cid.toString();
     } catch (e) {
+      console.log("Error uploading file to IPFS: ", e);
       return null;
     }
   };
