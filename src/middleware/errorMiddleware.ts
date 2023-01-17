@@ -1,6 +1,7 @@
 import ResourceNotFoundError from "../errors/resourceNotFoundError";
 import { Response, Request } from "express";
 import NftAuctionServiceError from "../errors/NftAuctionServiceError";
+import NotAuthorizedError from "../errors/notAuthorizedError";
 
 export async function onError(
   err: Error,
@@ -12,6 +13,8 @@ export async function onError(
   console.log(err);
   if (err instanceof ResourceNotFoundError) {
     res.status(404);
+  } else if (err instanceof NotAuthorizedError) {
+    res.status(401);
   } else if (err instanceof NftAuctionServiceError) {
     res.status(400);
   } else {
