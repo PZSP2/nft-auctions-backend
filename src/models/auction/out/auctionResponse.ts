@@ -1,7 +1,7 @@
-import SchoolResponse from "../../school/schoolResponse";
 import BidResponse from "./bidResponse";
 import MinimalNftResponse from "../../nft/out/minimalNftResponse";
 import { Status } from "@prisma/client";
+import MinimalSchoolResponse from "../../school/minimalSchoolResponse";
 
 export default interface AuctionResponse {
   readonly auctionId: number;
@@ -14,7 +14,7 @@ export default interface AuctionResponse {
 
   readonly status: Status;
 
-  readonly school?: SchoolResponse;
+  readonly school?: MinimalSchoolResponse;
 
   readonly bids: BidResponse[];
 

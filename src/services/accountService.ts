@@ -15,7 +15,11 @@ import { Wallet } from "xrpl";
 import AuthUtils from "../utils/AuthUtils";
 import ResourceNotFoundError from "../errors/resourceNotFoundError";
 import WalletError from "../errors/WalletError";
-import { NFTWithTags, NFTWithTagsAndIssuer } from "../models/types";
+import {
+  AuctionUpdates,
+  NFTWithTags,
+  NFTWithTagsAndIssuer,
+} from "../models/types";
 
 export default class AccountService {
   private prisma: PrismaClient;
@@ -70,10 +74,11 @@ export default class AccountService {
   createAccount = async (createAccountDTO: CreateAccountDto): Promise<User> =>
     this.prisma.user.create({
       data: {
-        accountType: Role[createAccountDTO.role as keyof typeof Role],
+        account_type: Role[createAccountDTO.role as keyof typeof Role],
         email: createAccountDTO.email,
         name: createAccountDTO.name,
         password: await AuthUtils.hashPassword(createAccountDTO.password),
+        balance: 1000,
       },
     });
 
@@ -173,10 +178,12 @@ export default class AccountService {
     });
   };
 
-  checkAuctionsToConfirm = async (userId: number) =>
-    this.prisma.auction.findMany({
+  checkAuctionsUpdate = async (userId: number): Promise<AuctionUpdates> => {
+    const ownedAuctionUpdates = await this.prisma.auction.findMany({
       where: {
-        status: Status.WON,
+        status: {
+          in: [Status.WON],
+        },
         nft: {
           issuer: {
             id: userId,
@@ -185,9 +192,36 @@ export default class AccountService {
       },
       include: {
         nft: true,
-        bids: true,
+        bids: {
+          include: {
+            bidder: true,
+          },
+        },
       },
     });
+    const biddenAuctions = await this.prisma.auction.findMany({
+      where: {
+        status: Status.ACTIVE,
+        bids: {
+          some: {
+            bidder_id: userId,
+          },
+        },
+      },
+      include: {
+        nft: true,
+        bids: {
+          include: {
+            bidder: true,
+          },
+        },
+      },
+    });
+    return {
+      ownedAuctions: ownedAuctionUpdates,
+      biddenAuctions: biddenAuctions,
+    };
+  };
 
   getAccountBalance = async (
     accountId: number
@@ -201,7 +235,46 @@ export default class AccountService {
       throw new ResourceNotFoundError("Wallet not yet funded");
     return {
       walletAddress: user.wallet_address,
-      balance: await this.ledger.getBalance(user.wallet_address),
+      balance: user.balance.toNumber(),
+    };
+  };
+
+  addToBalance = async (
+    accountId: number,
+    balanceToAdd: number
+  ): Promise<{ walletAddress: string; balance: number }> => {
+    const account = await this.prisma.user.findFirst({
+      select: {
+        balance: true,
+        wallet_address: true,
+      },
+      where: {
+        id: accountId,
+      },
+    });
+    if (account == null) {
+      throw new ResourceNotFoundError(
+        "Account with id " + accountId + " not found."
+      );
+    }
+    if (account.wallet_address == null) {
+      throw new WalletError("Wallet not yet funded");
+    }
+    const updatedBalance = await this.prisma.user.update({
+      select: {
+        balance: true,
+      },
+      where: {
+        id: accountId,
+      },
+      data: {
+        balance: balanceToAdd + account.balance.toNumber(),
+      },
+    });
+
+    return {
+      walletAddress: account.wallet_address,
+      balance: updatedBalance.balance.toNumber(),
     };
   };
 }

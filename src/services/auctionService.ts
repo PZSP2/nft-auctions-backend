@@ -3,6 +3,7 @@ import {
   Bid,
   NFT,
   PrismaClient,
+  School,
   Status,
   Tag,
   User,
@@ -24,6 +25,7 @@ import {
   NFTWithTagsAndIssuer,
 } from "../models/types";
 
+type AuctionWithNFTAndOwner = Auction & { nft: NFT & { owner: User } };
 export default class AuctionService {
   private readonly prisma: PrismaClient;
   private readonly ledgerAdapter = XrpLedgerAdapter.getInstance();
@@ -38,7 +40,9 @@ export default class AuctionService {
     nftId: number | undefined,
     issuerId: number | undefined,
     tagId: number | undefined
-  ): Promise<(Auction & { nft: NFTWithTags; bids: BidWithBidder[] })[]> =>
+  ): Promise<
+    (Auction & { nft: NFTWithTags; bids: BidWithBidder[]; school: School })[]
+  > =>
     this.prisma.auction.findMany({
       where: {
         status: {
@@ -67,6 +71,7 @@ export default class AuctionService {
             bidder: true,
           },
         },
+        school: true,
       },
     });
 
@@ -76,6 +81,7 @@ export default class AuctionService {
     Auction & {
       nft: NFT & { issuer: User; owner: User; tags: Tag[] };
       bids: BidWithBidder[];
+      school: School;
     }
   > => {
     const auction = await this.prisma.auction.findFirst({
@@ -95,6 +101,7 @@ export default class AuctionService {
             tags: true,
           },
         },
+        school: true,
       },
     });
     if (auction == null) {
@@ -127,13 +134,21 @@ export default class AuctionService {
   private updateAuctionStatus = async (
     auctionId: number,
     desiredStatus: Status
-  ): Promise<Auction> =>
+  ): Promise<AuctionWithNFTAndOwner> =>
     await this.prisma.auction.update({
       where: {
         id: auctionId,
       },
       data: {
         status: desiredStatus,
+      },
+      include: {
+        nft: {
+          include: {
+            owner: true,
+            tags: true,
+          },
+        },
       },
     });
 
@@ -152,6 +167,7 @@ export default class AuctionService {
         id: bidderId,
       },
     });
+
     if (!this.checkIfAuctionIsActive(auction)) {
       throw new AuctionStatusError("Auction is not active");
     } else if (bid.bidAmount <= highestBid) {
@@ -160,6 +176,8 @@ export default class AuctionService {
       throw new BidError("You cannot bid on your own NFT");
     } else if (bidder?.wallet_seed == null) {
       throw new BidError("You must have a wallet to bid on an auction");
+    } else if (bidder.balance.toNumber() < bid.bidAmount) {
+      throw new BidError("Insufficient fund");
     }
     const newBid = await this.prisma.bid.create({
       data: {
@@ -171,12 +189,13 @@ export default class AuctionService {
         bidder: true,
       },
     });
+    const endTime = Math.max(new Date().getTime() + 1000 * 60 * 5, auction.end_time.getTime())
     const updatedAuction = await this.prisma.auction.update({
       where: {
         id: auctionId,
       },
       data: {
-        end_time: new Date(auction.end_time.getTime() + 1000 * 60 * 5),
+        end_time: new Date(endTime),
       },
     });
     ScheduleUtils.getInstance().scheduleJob(
@@ -197,12 +216,29 @@ export default class AuctionService {
       where: {
         id: createAuctionDTO.nftId,
       },
+      include: {
+        auctions: true,
+      },
     });
-    if (nft?.ledgerId == null) {
-      throw new NftCreateError("NFT not minted");
+    if (nft == null) {
+      throw new ResourceNotFoundError(
+        "NFT with id " + createAuctionDTO.nftId + " not found"
+      );
     }
     if (nft?.owner_id !== sellerId) {
       throw new NotAuthorizedError("User has to be owner of the NFT");
+    }
+    if (
+      nft?.auctions.some(
+        (auction) => auction.status in [Status.ACTIVE, Status.CALL_FOR_CONFIRM]
+      )
+    ) {
+      throw new AuctionStatusError(
+        "You already have active auction with this NFT"
+      );
+    }
+    if (nft?.ledger_id == null) {
+      throw new NftCreateError("NFT not minted");
     }
 
     const auction = await this.prisma.auction.create({
@@ -245,12 +281,16 @@ export default class AuctionService {
     accountId: number
   ): Promise<Auction> => {
     const auction = await this.getAuctionByAuctionId(auctionId);
-    if (auction.nft.owner_id !== accountId)
-      throw new NotAuthorizedError("User has to be issuer of the NFT");
+    if (!this.canConfirmOrRejectAuction(auction, accountId)) {
+      throw new AuctionConfirmError(
+        "You must be owner and auction has to be finished to confirm"
+      );
+    }
     const highestBid = await this.getHighestBid(auctionId);
-    if (auction.status != Status.WON || highestBid == null)
-      throw new AuctionConfirmError("Auction is not won");
-    const nftToken = auction.nft.ledgerId ?? "";
+    if (highestBid == null) {
+      throw new AuctionConfirmError("No bids found");
+    }
+    const nftToken = auction.nft.ledger_id ?? "";
     const buyer = highestBid.bidder_id;
     const seller = auction.nft.issuer_id;
     const price = highestBid.bid_price;
@@ -268,7 +308,7 @@ export default class AuctionService {
     const sellOfferInfo: NFTokenCreateOffer = {
       Account: sellerWallet.classicAddress,
       Destination: buyerWallet.classicAddress,
-      Amount: price.toFixed(0),
+      Amount: "1",
       NFTokenID: nftToken,
       TransactionType: "NFTokenCreateOffer",
       Flags: 1,
@@ -297,17 +337,41 @@ export default class AuctionService {
         await this.ledgerAdapter.acceptNftOffer(
           acceptOffer,
           sellerWallet,
-          (result) => {
-            if (result?.result.validated == true) {
+          async (result) => {
+            if (
+              result?.result.validated == true &&
+              (await this.transferFunds(price, seller, buyer))
+            ) {
               console.log("Accepted offer");
-              this.updateNFTOwners(auction.nft.id, seller, buyer);
+              await this.updateNFTOwners(auction.nft.id, seller, buyer);
+              await this.updateAuctionStatus(auction.id, Status.CONFIRMED);
+            } else {
+              await this.updateAuctionStatus(auction.id, Status.REJECTED);
             }
           }
         );
-        await this.updateAuctionStatus(auction.id, Status.CONFIRMED);
       });
     return confirmedAuction;
   };
+
+  rejectAuction = async (
+    auctionId: number,
+    accountId: number
+  ): Promise<AuctionWithNFTAndOwner> => {
+    const auction = await this.getAuctionByAuctionId(auctionId);
+
+    if (!this.canConfirmOrRejectAuction(auction, accountId) && auction.status != Status.CALL_FOR_CONFIRM) {
+      throw new AuctionConfirmError(
+        "You must be owner and auction has to be won to reject"
+      );
+    }
+    return await this.updateAuctionStatus(auctionId, Status.REJECTED);
+  };
+
+  private canConfirmOrRejectAuction = (
+    auction: AuctionWithNFTAndOwner,
+    userId: number
+  ): boolean => (auction.status == Status.WON || auction.status == Status.CALL_FOR_CONFIRM) && userId == auction.nft.owner_id;
 
   async updateNFTOwners(
     nftId: number,
@@ -323,5 +387,48 @@ export default class AuctionService {
         owner_id: buyerId,
       },
     });
+  }
+
+  async transferFunds(
+    amount: number,
+    sellerId: number,
+    buyerId: number
+  ): Promise<boolean> {
+    const seller = await this.prisma.user.findFirst({
+      select: {
+        balance: true,
+      },
+      where: {
+        id: sellerId,
+      },
+    });
+    const buyer = await this.prisma.user.findFirst({
+      select: {
+        balance: true,
+      },
+      where: {
+        id: buyerId,
+      },
+    });
+    if (buyer == null || seller == null || buyer?.balance.toNumber() < amount) {
+      return false;
+    }
+    await this.prisma.user.update({
+      where: {
+        id: buyerId,
+      },
+      data: {
+        balance: buyer.balance.toNumber() - amount,
+      },
+    });
+    await this.prisma.user.update({
+      where: {
+        id: sellerId,
+      },
+      data: {
+        balance: seller.balance.toNumber() + amount,
+      },
+    });
+    return true;
   }
 }

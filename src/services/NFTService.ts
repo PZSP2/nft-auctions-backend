@@ -118,7 +118,8 @@ export default class NFTService {
               id: nft.id,
             },
             data: {
-              ledgerId: newNft.NFTokenID,
+              ledger_id: newNft.NFTokenID,
+              minted_date: new Date(),
             },
           });
         } else {
@@ -142,7 +143,7 @@ export default class NFTService {
         id: nftID,
       },
     });
-    return nft?.ledgerId != null;
+    return nft?.ledger_id != null;
   }
 
   transferNFT = async (
@@ -165,14 +166,14 @@ export default class NFTService {
       throw new NotAuthorizedError("Account is not the owner of the NFT");
 
     const walletSeed = nft.owner.wallet_seed;
-    if (!walletSeed || !nft.ledgerId) return false;
+    if (!walletSeed || !nft.ledger_id) return false;
     const wallet = await this.ledger.getWallet(walletSeed);
     const offer: NFTokenCreateOffer = {
       Amount: "0",
       TransactionType: "NFTokenCreateOffer",
       Account: wallet.classicAddress,
       Destination: destinationAddress,
-      NFTokenID: nft.ledgerId,
+      NFTokenID: nft.ledger_id,
     };
 
     const result = await this.ledger.createSellOffer(offer, wallet);

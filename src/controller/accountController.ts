@@ -20,9 +20,11 @@ export default class AccountController {
     const createAccountDTO: CreateAccountDto = req.body;
     this.service
       .createAccount(createAccountDTO)
-      .then((account) =>
-        res.status(201).json(MapperUtils.mapUserToAccountResponse(account))
-      )
+      .then((account) => {
+        req.login(account, () =>
+          res.status(201).json(MapperUtils.mapUserToAccountResponse(account))
+        );
+      })
       .catch((err) => {
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
           if (err.code === "P2002") {
@@ -89,21 +91,30 @@ export default class AccountController {
       .catch((err) => next(err));
   };
 
-  checkAuctionToConfirm = async (
+  checkAuctionUpdates = async (
     req: Request,
     res: Response,
     next: (err: Error) => void
   ): Promise<void> => {
     const accountId = (req.user as User).id;
     this.service
-      .checkAuctionsToConfirm(accountId)
+      .checkAuctionsUpdate(accountId)
       .then((auctions) =>
-        res.status(200).json({
-          auctions: auctions.map((auction) =>
-            MapperUtils.mapToAuctionToConfirm(auction)
-          ),
-        })
+        res.status(200).json(MapperUtils.mapAuctionUpdates(auctions, accountId))
       )
+      .catch((err) => next(err));
+  };
+
+  addBalance = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const accountId = (req.user as User).id;
+    const balanceToAdd = req.body.balanceToAdd as number;
+    this.service
+      .addToBalance(accountId, balanceToAdd)
+      .then((balance) => res.status(200).json(balance))
       .catch((err) => next(err));
   };
 }

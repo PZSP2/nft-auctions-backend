@@ -8,6 +8,7 @@ export default interface NftResponse {
 
   readonly description?: string;
 
+  readonly mintedDate?: Date;
   readonly uri?: string;
 
   readonly isImage: boolean;

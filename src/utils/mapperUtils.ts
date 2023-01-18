@@ -9,8 +9,17 @@ import MinimalNftResponse from "../models/nft/out/minimalNftResponse";
 import MinimalSchoolResponse from "../models/school/minimalSchoolResponse";
 import SchoolResponse from "../models/school/schoolResponse";
 import TagResponse from "../models/nft/out/tagResponse";
-import { NFTWithTags, NFTWithTagsAndIssuer } from "../models/types";
-import AuctionToConfirm from "../models/account/auctionToConfrim";
+import {
+  AuctionUpdates,
+  AuctionWithBidderAndNFT,
+  NFTWithTags,
+  NFTWithTagsAndIssuer,
+} from "../models/types";
+import {
+  OwnedAuctionUpdates,
+  AuctionsUpdatesResponse,
+  BiddenAuctionUpdates,
+} from "../models/account/auctionToConfrim";
 
 export default class MapperUtils {
   static mapNftToNftResponse = (
@@ -18,9 +27,10 @@ export default class MapperUtils {
   ): NftResponse => ({
     nftId: nft.id,
     name: nft.name,
-    description: nft.description != null ? nft.description : undefined,
+    description: nft.description ?? undefined,
     uri: nft.uri,
     isImage: nft.is_image,
+    mintedDate: nft.minted_date ?? undefined,
     issuer:
       nft.issuer != null
         ? MapperUtils.mapUserToMinimalUserResponse(nft.issuer)
@@ -46,7 +56,7 @@ export default class MapperUtils {
     }
   ): AccountResponse {
     return {
-      role: user.accountType ?? Role.NORMAL_USER,
+      role: user.account_type ?? Role.NORMAL_USER,
       accountId: user.id,
       biddenAuctions:
         user.bid?.map((bid) =>
@@ -107,6 +117,7 @@ export default class MapperUtils {
     auction: Auction & {
       bids?: (Bid & { bidder: User })[];
       nft: NFT & { tags: Tag[] };
+      school: School;
     }
   ): AuctionResponse {
     const winningBid =
@@ -121,7 +132,7 @@ export default class MapperUtils {
       endDate: auction.end_time,
       status: auction.status,
       nft: this.mapNftToMinimalResponse(auction.nft),
-      school: undefined,
+      school: MapperUtils.mapSchoolToMinimalSchoolResponse(auction.school),
       startDate: auction.start_time,
       startingPrice: 0,
       winningBid:
@@ -163,12 +174,23 @@ export default class MapperUtils {
     };
   }
 
-  static mapToAuctionToConfirm(
-    auction: Auction & {
-      nft: NFT;
-      bids?: Bid[];
-    }
-  ): AuctionToConfirm {
+  static mapAuctionUpdates(
+    auctionUpdates: AuctionUpdates,
+    accountId: number
+  ): AuctionsUpdatesResponse {
+    return {
+      ownedAuctionsUpdates: auctionUpdates.ownedAuctions.map((auction) =>
+        this.mapOwnedAuctionToOwnedAuctionUpdates(auction)
+      ),
+      biddenAuctionsUpdates: auctionUpdates.biddenAuctions.map((auction) =>
+        this.mapBiddenAuctionToAuction(auction, accountId)
+      ),
+    };
+  }
+
+  static mapOwnedAuctionToOwnedAuctionUpdates(
+    auction: AuctionWithBidderAndNFT
+  ): OwnedAuctionUpdates {
     const winningBid =
       auction.bids?.length ?? 0 > 0
         ? auction.bids?.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
@@ -179,6 +201,25 @@ export default class MapperUtils {
       nftId: auction.nft_id,
       nftName: auction.nft.name,
       finalPrice: winningBid?.bid_price,
+    };
+  }
+
+  static mapBiddenAuctionToAuction(
+    auction: AuctionWithBidderAndNFT,
+    accountId: number
+  ): BiddenAuctionUpdates {
+    const winningBid =
+      auction.bids?.length ?? 0 > 0
+        ? auction.bids?.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
+        : undefined;
+
+    return {
+      auctionId: auction.id,
+      nftId: auction.nft_id,
+      nftName: auction.nft.name,
+      endTime: auction.end_time.toISOString(),
+      currentPrice: winningBid?.bid_price,
+      isLeading: winningBid?.bidder_id == accountId,
     };
   }
 }

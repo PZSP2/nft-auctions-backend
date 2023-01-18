@@ -3,6 +3,9 @@ import { Schema } from "express-validator";
 export const auctionIdSchema: Schema = {
   auctionId: {
     in: "params",
+    isInt: true,
+    toInt: true,
+    errorMessage: "Auction id mus be integer",
   },
 };
 

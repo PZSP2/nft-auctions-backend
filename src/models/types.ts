@@ -20,3 +20,13 @@ export type AuctionWithNFTWithoutIssuerAndBids = Auction & {
   nft: NFTWithTagsAndIssuer;
   bids: BidWithBidder[];
 };
+
+export type AuctionWithBidderAndNFT = Auction & {
+  nft: NFT;
+  bids: (Bid & { bidder: User })[];
+};
+
+export type AuctionUpdates = {
+  ownedAuctions: AuctionWithBidderAndNFT[];
+  biddenAuctions: AuctionWithBidderAndNFT[];
+};

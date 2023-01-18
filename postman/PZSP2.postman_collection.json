@@ -1,576 +1,743 @@
 {
-  "info": {
-    "_postman_id": "60c23c8e-1028-4017-b025-5808f4bc0a94",
-    "name": "PZSP2",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "17478370"
-  },
-  "item": [
-    {
-      "name": "Register account",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "var jsonData = JSON.parse(responseBody)",
-              "pm.collectionVariables.set(\"accountId\", jsonData['accountId']);",
-              "pm.collectionVariables.set('email', jsonData['email'])",
-              ""
-            ],
-            "type": "text/javascript"
-          }
-        },
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [""],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "noauth"
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"email\": \"test@mail1.pl\",\n    \"password\": \"password\",\n    \"name\": \"2\",\n    \"role\": \"ADMIN\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{API URL}}/account/",
-          "host": ["{{API URL}}"],
-          "path": ["account", ""]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Login",
-      "request": {
-        "auth": {
-          "type": "noauth"
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"username\": \"test@mail1.pl\",\n    \"password\": \"password\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{API URL}}/auth/login/",
-          "host": ["{{API URL}}"],
-          "path": ["auth", "login", ""]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get wallet",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/account/wallet",
-          "host": ["{{API URL}}"],
-          "path": ["account", "wallet"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Fun a new wallet",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/account/wallet",
-          "host": ["{{API URL}}"],
-          "path": ["account", "wallet"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get account",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/account/{{accountId}}",
-          "host": ["{{API URL}}"],
-          "path": ["account", "{{accountId}}"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get all nfts",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/nft?name=robot&issuerId={{accountId}}&ownerId={{accountId}}&schoolId={{schoolId}}",
-          "host": ["{{API URL}}"],
-          "path": ["nft"],
-          "query": [
-            {
-              "key": "name",
-              "value": "robot"
-            },
-            {
-              "key": "issuerId",
-              "value": "{{accountId}}"
-            },
-            {
-              "key": "ownerId",
-              "value": "{{accountId}}"
-            },
-            {
-              "key": "schoolId",
-              "value": "{{schoolId}}"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get nft",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/nft/{{nftId}}",
-          "host": ["{{API URL}}"],
-          "path": ["nft", "{{nftId}}"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get all tags",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/tag",
-          "host": ["{{API URL}}"],
-          "path": ["tag"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create NFT",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "var jsonData = JSON.parse(responseBody)",
-              "pm.environment.set('nftId', jsonData['nftId'])"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "formdata",
-          "formdata": [
-            {
-              "key": "name",
-              "value": "Robot",
-              "type": "text"
-            },
-            {
-              "key": "description",
-              "value": "One of the drawings made on our art lessons",
-              "type": "text"
-            },
-            {
-              "key": "file",
-              "type": "file",
-              "src": "/home/wojtek/Pictures/Screenshot from 2021-12-08 01-00-46.png"
-            },
-            {
-              "key": "tags[0]",
-              "value": "1",
-              "type": "text"
-            },
-            {
-              "key": "tags[1]",
-              "value": "2",
-              "type": "text"
-            }
-          ]
-        },
-        "url": {
-          "raw": "{{API URL}}/nft",
-          "host": ["{{API URL}}"],
-          "path": ["nft"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Mint nft",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/nft/{{nftId}}/mint",
-          "host": ["{{API URL}}"],
-          "path": ["nft", "{{nftId}}", "mint"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Check minting status",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/nft/{{nftId}}/mint",
-          "host": ["{{API URL}}"],
-          "path": ["nft", "{{nftId}}", "mint"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create school",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [""],
-            "type": "text/javascript"
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "var jsonData = JSON.parse(responseBody)",
-              "pm.environment.set('schoolId', jsonData['schoolId'])"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"name\": \"Politechnika Warszawska\",\n    \"phone\": \"12345678\",\n    \"email\": \"mail@pw.edu.pl\",\n    \"country\": \"Poland\",\n    \"city\": \"Warsaw\",\n    \"address\": \"pl. Plotiechniki 1\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{API URL}}/school/",
-          "host": ["{{API URL}}"],
-          "path": ["school", ""]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get all schools",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "method": "GET",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"name\": \"Politechnika Warszawska\",\n    \"phone\": \"12345678\",\n    \"email\": \"mail\",\n    \"country\": \"Poland\",\n    \"city\": \"Warsaw\",\n    \"address\": \"pl. Plotiechniki 1\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{API URL}}/school/",
-          "host": ["{{API URL}}"],
-          "path": ["school", ""]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get school by id",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/school/{{schoolId}}",
-          "host": ["{{API URL}}"],
-          "path": ["school", "{{schoolId}}"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create Auction",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "var moment = require('moment')",
-              "var currentDate = moment()",
-              "pm.collectionVariables.set('startTime', currentDate);",
-              "pm.collectionVariables.set('endTime', currentDate.add(5, 'minutes'));"
-            ],
-            "type": "text/javascript"
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "var jsonData = JSON.parse(responseBody)",
-              "pm.collectionVariables.set('auctionId', jsonData['auctionId'])"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"nftId\": {{nftId}},\n    \"startTime\": \"{{startTime}}\",\n    \"endTime\": \"{{endTime}}\",\n    \"minimalPrice\": 100,\n    \"schoolId\": {{schoolId}}\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{API URL}}/auction",
-          "host": ["{{API URL}}"],
-          "path": ["auction"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get all auctions",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "var moment = require('moment')",
-              "var currentDate = moment()",
-              "pm.collectionVariables.set('startTime', currentDate);",
-              "pm.collectionVariables.set('endTime', currentDate.add(5, 'minutes'));"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/auction",
-          "host": ["{{API URL}}"],
-          "path": ["auction"],
-          "query": [
-            {
-              "key": "schoolId",
-              "value": "{{schoolId}}",
-              "disabled": true
-            },
-            {
-              "key": "nftId",
-              "value": "{{nftId}}",
-              "disabled": true
-            },
-            {
-              "key": "issuerId",
-              "value": "{{accountId}}",
-              "disabled": true
-            },
-            {
-              "key": "status",
-              "value": "won",
-              "disabled": true
-            },
-            {
-              "key": "nftTagId",
-              "value": "{{tagId}}",
-              "disabled": true
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get auction",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "var moment = require('moment')",
-              "var currentDate = moment()",
-              "pm.collectionVariables.set('startTime', currentDate);",
-              "pm.collectionVariables.set('endTime', currentDate.add(5, 'minutes'));"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/auction?schoold=10",
-          "host": ["{{API URL}}"],
-          "path": ["auction"],
-          "query": [
-            {
-              "key": "isActive",
-              "value": "false",
-              "disabled": true
-            },
-            {
-              "key": "nftId",
-              "value": "2",
-              "disabled": true
-            },
-            {
-              "key": "schoold",
-              "value": "10"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Bid on auction",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"bidAmount\": 250\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{API URL}}/auction/{{auctionId}}/bid",
-          "host": ["{{API URL}}"],
-          "path": ["auction", "{{auctionId}}", "bid"]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Confirm auction",
-      "request": {
-        "method": "PUT",
-        "header": [],
-        "url": {
-          "raw": "{{API URL}}/auction/{{auction1Id}}/confirm",
-          "host": ["{{API URL}}"],
-          "path": ["auction", "{{auction1Id}}", "confirm"]
-        }
-      },
-      "response": []
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [""]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [""]
-      }
-    }
-  ],
-  "variable": [
-    {
-      "key": "API URL",
-      "value": "localhost:3000",
-      "type": "string"
-    },
-    {
-      "key": "accountId",
-      "value": 13
-    },
-    {
-      "key": "schoolId",
-      "value": "3"
-    },
-    {
-      "key": "email",
-      "value": "a@b.pl",
-      "type": "string"
-    },
-    {
-      "key": "accountPassword",
-      "value": "password",
-      "type": "string"
-    },
-    {
-      "key": "nftId",
-      "value": "1",
-      "type": "string"
-    },
-    {
-      "key": "startTime",
-      "value": "2023-01-12T01:59:26.019Z",
-      "type": "string"
-    },
-    {
-      "key": "endTime",
-      "value": "2023-01-12T01:59:26.019Z",
-      "type": "string"
-    },
-    {
-      "key": "auctionId",
-      "value": 4,
-      "type": "string"
-    }
-  ]
+	"info": {
+		"_postman_id": "60c23c8e-1028-4017-b025-5808f4bc0a94",
+		"name": "PZSP2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17478370"
+	},
+	"item": [
+		{
+			"name": "Register account",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody)",
+							"pm.collectionVariables.set(\"accountId\", jsonData['accountId']);",
+							"pm.collectionVariables.set('email', jsonData['email'])",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"test@mail1.pl\",\n    \"password\": \"password\",\n    \"name\": \"2\",\n    \"role\": \"ADMIN\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/account/",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"account",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{email}}\",\n    \"password\": \"password\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/auth/login/",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auth",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get wallet",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/account/wallet",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"account",
+						"wallet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add balance",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"balanceToAdd\": 300.00\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/account/funds",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"account",
+						"funds"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fun a new wallet",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/account/wallet",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"account",
+						"wallet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get account",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/account/{{accountId}}",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"account",
+						"{{accountId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get updates",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/account/me/updates",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"account",
+						"me",
+						"updates"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all nfts",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/nft?name=robot&issuerId={{accountId}}&ownerId={{accountId}}&schoolId={{schoolId}}",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"nft"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "robot"
+						},
+						{
+							"key": "issuerId",
+							"value": "{{accountId}}"
+						},
+						{
+							"key": "ownerId",
+							"value": "{{accountId}}"
+						},
+						{
+							"key": "schoolId",
+							"value": "{{schoolId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get nft",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/nft/{{nftId}}",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"nft",
+						"{{nftId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all tags",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/tag",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"tag"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create NFT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody)",
+							"pm.environment.set('nftId', jsonData['nftId'])"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "name",
+							"value": "Robot",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "One of the drawings made on our art lessons",
+							"type": "text"
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/home/wojtek/Pictures/Screenshot from 2021-12-08 01-00-46.png"
+						},
+						{
+							"key": "tags[0]",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "tags[1]",
+							"value": "2",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{API URL}}/nft",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"nft"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mint nft",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/nft/{{nftId}}/mint",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"nft",
+						"{{nftId}}",
+						"mint"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check minting status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/nft/{{nftId}}/mint",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"nft",
+						"{{nftId}}",
+						"mint"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create school",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody)",
+							"pm.environment.set('schoolId', jsonData['schoolId'])"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Politechnika Warszawska\",\n    \"phone\": \"12345678\",\n    \"email\": \"mail@pw.edu.pl\",\n    \"country\": \"Poland\",\n    \"city\": \"Warsaw\",\n    \"address\": \"pl. Plotiechniki 1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/school/",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"school",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all schools",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Politechnika Warszawska\",\n    \"phone\": \"12345678\",\n    \"email\": \"mail\",\n    \"country\": \"Poland\",\n    \"city\": \"Warsaw\",\n    \"address\": \"pl. Plotiechniki 1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/school/",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"school",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get school by id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/school/{{schoolId}}",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"school",
+						"{{schoolId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Auction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var moment = require('moment')",
+							"var currentDate = moment()",
+							"pm.collectionVariables.set('startTime', currentDate);",
+							"pm.collectionVariables.set('endTime', currentDate.add(5, 'minutes'));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody)",
+							"pm.collectionVariables.set('auctionId', jsonData['auctionId'])"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"nftId\": {{nftId}},\n    \"startTime\": \"{{startTime}}\",\n    \"endTime\": \"{{endTime}}\",\n    \"minimalPrice\": 100,\n    \"schoolId\": {{schoolId}}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/auction",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auction"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all auctions",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var moment = require('moment')",
+							"var currentDate = moment()",
+							"pm.collectionVariables.set('startTime', currentDate);",
+							"pm.collectionVariables.set('endTime', currentDate.add(5, 'minutes'));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/auction",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auction"
+					],
+					"query": [
+						{
+							"key": "schoolId",
+							"value": "{{schoolId}}",
+							"disabled": true
+						},
+						{
+							"key": "nftId",
+							"value": "{{nftId}}",
+							"disabled": true
+						},
+						{
+							"key": "issuerId",
+							"value": "{{accountId}}",
+							"disabled": true
+						},
+						{
+							"key": "status",
+							"value": "won",
+							"disabled": true
+						},
+						{
+							"key": "nftTagId",
+							"value": "{{tagId}}",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get auction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var moment = require('moment')",
+							"var currentDate = moment()",
+							"pm.collectionVariables.set('startTime', currentDate);",
+							"pm.collectionVariables.set('endTime', currentDate.add(5, 'minutes'));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/auction?schoold=10",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auction"
+					],
+					"query": [
+						{
+							"key": "isActive",
+							"value": "false",
+							"disabled": true
+						},
+						{
+							"key": "nftId",
+							"value": "2",
+							"disabled": true
+						},
+						{
+							"key": "schoold",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Bid on auction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bidAmount\": 250\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/auction/{{auctionId}}/bid",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auction",
+						"{{auctionId}}",
+						"bid"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Confirm auction",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/auction/{{auction1Id}}/confirm",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auction",
+						"{{auction1Id}}",
+						"confirm"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reject auction",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{API URL}}/auction/{{auctionId}}/reject",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"auction",
+						"{{auctionId}}",
+						"reject"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "API URL",
+			"value": "localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "accountId",
+			"value": ""
+		},
+		{
+			"key": "schoolId",
+			"value": ""
+		},
+		{
+			"key": "email",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "accountPassword",
+			"value": "password",
+			"type": "string"
+		},
+		{
+			"key": "nftId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "startTime",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "endTime",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "auctionId",
+			"value": "",
+			"type": "string"
+		}
+	]
 }

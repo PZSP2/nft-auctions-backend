@@ -82,11 +82,24 @@ export default class AuctionController {
     res: Response,
     next: (err: Error) => void
   ): Promise<void> => {
-    const auctionId = Number(req.params.auctionId);
+    const auctionId = req.params.auctionId as unknown as number;
     const accountId = (req.user as User).id;
     this.service
       .confirmAuction(auctionId, accountId)
       .then((auction) => res.status(200).json({ auctionId: auction.id }))
+      .catch((err) => next(err));
+  };
+
+  rejectAuction = async (
+    req: Request,
+    res: Response,
+    next: (err: Error) => void
+  ): Promise<void> => {
+    const auctionId = req.params.auctionId as unknown as number;
+    const accountId = (req.user as User).id;
+    this.service
+      .rejectAuction(auctionId, accountId)
+      .then((auction) => res.status(200).json(auction))
       .catch((err) => next(err));
   };
 }

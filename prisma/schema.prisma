@@ -23,17 +23,19 @@ enum Status {
   WON
   CALL_FOR_CONFIRM
   CONFIRMED
+  REJECTED
 }
 
 model User {
   id              Int     @id @default(autoincrement())
   email           String  @unique
   name            String?
-  accountType     Role
+  account_type     Role
   password        String
   wallet_address  String?
   account_address String?
   wallet_seed     String?
+  balance         Decimal @db.Money
   bid             Bid[]
   issued_nft      NFT[]   @relation("issued_nft")
   owned_nft       NFT[]   @relation("owned_nft")
@@ -47,10 +49,11 @@ model Tag {
 
 model NFT {
   id          Int         @id @default(autoincrement())
-  ledgerId    String?
+  ledger_id    String?
   name        String
   uri         String
   description String?
+  minted_date DateTime? @db.Date
   is_image    Boolean
   issuer_id   Int
   owner_id    Int

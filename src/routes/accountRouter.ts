@@ -4,7 +4,10 @@ import XrpLedgerAdapter from "../ledger/XrpLedgerAdapter";
 import AccountService from "../services/accountService";
 import AccountController from "../controller/accountController";
 import { createAccountSchema } from "../models/account/createAccountDTO";
-import { accountIdParams } from "../models/account/accountIdParams";
+import {
+  accountIdParams,
+  balanceToAddParams,
+} from "../models/account/accountIdParams";
 import schemaValidator from "../middleware/schemaValidator";
 import { protectedPath } from "../middleware/passportMiddleware";
 
@@ -17,9 +20,9 @@ const accountController = new AccountController(accountService);
 export const accountRouter = Router();
 
 accountRouter.get(
-  "/auctions/ended",
+  "/me/updates",
   protectedPath,
-  accountController.checkAuctionToConfirm
+  accountController.checkAuctionUpdates
 );
 
 accountRouter.post("/wallet", protectedPath, accountController.fundWallet);
@@ -37,5 +40,10 @@ accountRouter.post(
   schemaValidator({ schema: createAccountSchema }),
   accountController.createAccount
 );
-
+accountRouter.put(
+  "/funds",
+  protectedPath,
+  schemaValidator({ schema: balanceToAddParams }),
+  accountController.addBalance
+);
 accountRouter.put("/", protectedPath, accountController.updateAccount);

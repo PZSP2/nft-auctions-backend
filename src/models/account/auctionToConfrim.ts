@@ -1,4 +1,4 @@
-export default interface AuctionToConfirm {
+export interface OwnedAuctionUpdates {
   readonly auctionId: number;
   readonly nftId: number;
 
@@ -6,3 +6,20 @@ export default interface AuctionToConfirm {
 
   readonly finalPrice?: number;
 }
+
+export interface BiddenAuctionUpdates {
+  readonly auctionId: number;
+  readonly nftId: number;
+
+  readonly nftName: string;
+
+  readonly endTime: string;
+
+  readonly currentPrice?: number;
+
+  readonly isLeading: boolean;
+}
+export type AuctionsUpdatesResponse = {
+  ownedAuctionsUpdates: OwnedAuctionUpdates[];
+  biddenAuctionsUpdates: BiddenAuctionUpdates[];
+};

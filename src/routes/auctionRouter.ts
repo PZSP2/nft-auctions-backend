@@ -44,3 +44,9 @@ auctionRouter.put(
   schemaValidator({ schema: auctionIdSchema }),
   auctionController.confirmAuction
 );
+auctionRouter.put(
+  "/:auctionId/reject",
+  protectedPath,
+  schemaValidator({ schema: auctionIdSchema }),
+  auctionController.rejectAuction
+);

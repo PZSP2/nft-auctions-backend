@@ -15,7 +15,9 @@ export async function onError(
     res.status(404);
   } else if (err instanceof NotAuthorizedError) {
     res.status(401);
-  } else if (err instanceof NftAuctionServiceError) {
+  } else if (
+    err instanceof NftAuctionServiceError
+  ) {
     res.status(400);
   } else {
     res.status(500).json({ message: "Internal server error" });
