@@ -71,9 +71,16 @@ export default class NFTService {
     nftInfo: createNftDto,
     file: Express.Multer.File
   ): Promise<NFT & { issuer: User; owner: User; tags: Tag[] }> => {
+
     const uri = await IpfsUtils.ipfsFileUpload(file);
+    if (uri == null) {
+      throw new NftCreateError("Error uploading file to IPFS");
+    }
+    if (await this.ifNftExist(uri)) {
+      throw new NftCreateError("NFT already exists");
+    }
     const tags = nftInfo?.tags?.map((tagId) => ({ id: Number(tagId) })) ?? [];
-    return this.prisma.nFT.create({
+    const nft = await this.prisma.nFT.create({
       data: {
         name: nftInfo.name,
         issuer_id: Number(nftInfo.accountId),
@@ -91,12 +98,17 @@ export default class NFTService {
         tags: true,
       },
     });
+    this.mintNFT(nft.id).then();
+    return nft;
   };
 
   mintNFT = async (nftId: number): Promise<number> => {
     const nft = await this.getNFTById(nftId);
     if (nft == null) {
       throw new ResourceNotFoundError("NFT with id " + nftId + " not found");
+    }
+    if (nft.ledger_id != null) {
+        throw new NftCreateError("NFT already minted");
     }
     const walletSeed = nft.issuer.wallet_seed;
     if (walletSeed == null)

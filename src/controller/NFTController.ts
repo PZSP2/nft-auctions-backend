@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import NFTService from "../services/NFTService";
 import multer, { FileFilterCallback } from "multer";
 import MapperUtils from "../utils/mapperUtils";
-import IpfsUtils from "../utils/ipfsUtils";
 import NftCreateError from "../errors/nftCreateError";
 import { User } from "@prisma/client";
 import createNftDto from "../models/nft/in/createNftDto";
@@ -44,20 +43,10 @@ export default class NFTController {
       next(new NftCreateError("Error uploading file"));
       return;
     } else {
-      const uri = await IpfsUtils.ipfsFileUpload(req.file);
-      if (uri == null) {
-        next(new NftCreateError("Error uploading file to IPFS"));
-        return;
-      }
-      if (await this.service.ifNftExist(uri)) {
-        next(new NftCreateError("NFT already exists"));
-        return;
-      }
       const nftInfo: createNftDto = {
         accountId: (req.user as User).id,
         description: req.body.description,
         name: req.body.name,
-        uri: uri,
         tags: req.body.tags,
       };
       this.service

@@ -7,8 +7,6 @@ export default interface createNftDto {
 
   readonly description: string;
 
-  readonly uri: string;
-
   readonly tags: number[];
 }
 
