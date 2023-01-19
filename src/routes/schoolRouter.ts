@@ -17,7 +17,8 @@ const schoolController = new SchoolController(
 
 schoolRouter.get("/", schoolController.getAllSchools);
 
-schoolRouter.get("/:schoolId", schoolController.getSchoolById);
+schoolRouter.get("/:schoolId",   schemaValidator({ schema: schoolIdSchema }),
+    schoolController.getSchoolById);
 
 schoolRouter.post(
   "/",

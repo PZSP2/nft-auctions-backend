@@ -11,5 +11,7 @@ export default interface SchoolResponse {
 
   readonly address: string;
 
+  readonly photoUrl: string;
+
   readonly auctions: MinimalAuctionResponse[];
 }

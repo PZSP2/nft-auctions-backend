@@ -78,6 +78,7 @@ export default class SchoolService {
         city: schoolDto.city,
         phone: schoolDto.phone,
         email: schoolDto.email,
+        photo_url: schoolDto.photoUrl,
       },
     });
 
@@ -96,6 +97,7 @@ export default class SchoolService {
         city: schoolDto.city,
         phone: schoolDto.phone,
         email: schoolDto.email,
+        photo_url: schoolDto.photoUrl,
       },
     });
 }

@@ -159,6 +159,7 @@ export default class MapperUtils {
     return {
       schoolId: school.id,
       name: school.name,
+      photoUrl: school.photo_url,
     };
   }
 
@@ -171,6 +172,7 @@ export default class MapperUtils {
       phone: school.phone,
       email: school.email,
       address: school.country + " " + school.city + " " + school.address,
+      photoUrl: school.photo_url,
       auctions:
         school.auctions?.map((auction) =>
           this.mapAuctionToMinimalAuctionResponse(auction)

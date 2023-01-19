@@ -79,6 +79,13 @@ export default class NFTService {
     if (await this.ifNftExist(uri)) {
       throw new NftCreateError("NFT already exists");
     }
+    const issuer = await this.prisma.user.findFirst({
+      where: {
+        id: Number(nftInfo.accountId)
+      }
+    });
+    if (issuer?.wallet_seed == null)
+      throw new NftCreateError("Wallet seed of issuer not found");
     const tags = nftInfo?.tags?.map((tagId) => ({ id: Number(tagId) })) ?? [];
     const nft = await this.prisma.nFT.create({
       data: {
@@ -98,7 +105,9 @@ export default class NFTService {
         tags: true,
       },
     });
-    this.mintNFT(nft.id).then();
+
+
+    this.mintNFT(nft.id).then().catch();
     return nft;
   };
 
@@ -125,15 +134,17 @@ export default class NFTService {
           (accountNft) => accountNft.URI === convertStringToHex(nft.uri)
         );
         if (newNft != null) {
-          await this.prisma.nFT.update({
+          const date = new Date();
+          const t = await this.prisma.nFT.update({
             where: {
               id: nft.id,
             },
             data: {
               ledger_id: newNft.NFTokenID,
-              minted_date: new Date(),
+              minted_date: date,
             },
           });
+          return
         } else {
           console.log("NFT not found");
         }

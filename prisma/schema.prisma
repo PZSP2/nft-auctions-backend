@@ -53,7 +53,7 @@ model NFT {
   name        String
   uri         String
   description String?
-  minted_date DateTime? @db.Date
+  minted_date DateTime?
   is_image    Boolean
   issuer_id   Int
   owner_id    Int
@@ -97,5 +97,6 @@ model School {
   address  String
   phone    String
   email    String    @unique
+  photo_url String
   auctions Auction[]
 }

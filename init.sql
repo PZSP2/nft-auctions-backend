@@ -76,6 +76,7 @@ CREATE TABLE "School" (
     "address" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "photo_url" TEXT NOT NULL,
 
     CONSTRAINT "School_pkey" PRIMARY KEY ("id")
 );
@@ -142,9 +143,9 @@ INSERT INTO "User" (email, name, "account_type", password, wallet_address, walle
 INSERT INTO "User" (email, name, "account_type", password, wallet_address, wallet_seed, balance)  VALUES ('user7@mail.com', 'Melissa_Harris', 'NORMAL_USER', '$2a$10$PhxujKJ451/xHtpGKrMeMeDRV1r5TJCmAVVO5QAlcdlDmA/1cuQmK', 'rK5sJFT7UJJFCcqN7SYoVKUiNZx6Ce7STd', 'sEdTrwTDCUocxSPu26LT5p1xiWdPwx6', 1000);
 INSERT INTO "User" (email, name, "account_type", password, wallet_address, wallet_seed, balance)  VALUES ('user8@mail.com', 'Frances_Austin', 'NORMAL_USER', '$2a$10$PhxujKJ451/xHtpGKrMeMeDRV1r5TJCmAVVO5QAlcdlDmA/1cuQmK', 'rULBD2PQSLeu71M2rmoJMdu7gKvZCRJRY4', 'sEdV3SfmHBnDWLewmf9ybjW16pTM5tU', 1000);
 INSERT INTO "User" (email, name, "account_type", password, wallet_address, wallet_seed, balance)  VALUES ('user9@mail.com', 'Daniel_Brown', 'NORMAL_USER', '$2a$10$PhxujKJ451/xHtpGKrMeMeDRV1r5TJCmAVVO5QAlcdlDmA/1cuQmK', 'rh71hVodnunH8nFJmJWLx3XbHb7TALcGVL', 'sEdSQuqeWrewF9zFH8nkwAAxy1VwK7V', 1000);
-INSERT INTO "School" (email, name, country, city, address, phone) VALUES ('school1@mail.com', 'St. John''s High School', 'Poland', 'Warsaw', '2122 w. el. segundo blvd', '+48 123 456 789');
-INSERT INTO "School" (email, name, country, city, address, phone) VALUES ('school2@mail.com', 'St. Mary''s High School', 'Poland', 'Warsaw', 'California Ave 12', '+48 123 456 789');
-INSERT INTO "School" (email, name, country, city, address, phone) VALUES ('school3@mail.com', 'Politechnika Warszawska', 'Poland', 'Warsaw', 'ul. Nowowiejska 15', '+48 123 456 789');
+INSERT INTO "School" (email, name, country, city, address, phone, photo_url) VALUES ('school1@mail.com', 'St. John''s High School', 'Poland', 'Warsaw', '2122 w. el. segundo blvd', '+48 123 456 789', 'https://images.unsplash.com/photo-1592066575517-58df903152f2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1298&q=80');
+INSERT INTO "School" (email, name, country, city, address, phone, photo_url) VALUES ('school2@mail.com', 'St. Mary''s High School', 'Poland', 'Warsaw', 'California Ave 12', '+48 123 456 789', 'https://i.pinimg.com/736x/b6/0a/c7/b60ac7afe54872456dd48550c6206872.jpg');
+INSERT INTO "School" (email, name, country, city, address, phone, photo_url) VALUES ('school3@mail.com', 'Politechnika Warszawska', 'Poland', 'Warsaw', 'ul. Nowowiejska 15', '+48 123 456 789', 'https://www.ee.pw.edu.pl/wp-content/uploads/2022/02/20210909_133622-scaled.jpg');
 INSERT INTO "NFT" (uri, name, description, issuer_id, owner_id, is_image, ledger_id, minted_date) VALUES ('QmXyH7W5DrqKuPjXFjC9MC69Bv4EwtawsrQoZPSLbw521d', 'The Witch', 'Digital drawing of a Witch made on School''s Haloween competition by Greg', 1, 1, true, '000800007A55FD5D87618448283563AE38A3056190F5206144B17C9E00000003', now());
 INSERT INTO "_NFTToTag" VALUES (1, 1);
 INSERT INTO "_NFTToTag" VALUES (1, 2);

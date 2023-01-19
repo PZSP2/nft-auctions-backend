@@ -12,6 +12,8 @@ export default interface CreateSchoolDto {
   readonly city: string;
 
   readonly address: string;
+
+  readonly photoUrl: string;
 }
 
 export const createSchoolSchema: Schema = {
@@ -42,6 +44,10 @@ export const createSchoolSchema: Schema = {
     in: "body",
     notEmpty: true,
   },
+    photoUrl: {
+    in: "body",
+    notEmpty: true,
+    }
 };
 
 export const schoolIdSchema: Schema = {
