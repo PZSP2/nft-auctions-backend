@@ -21,6 +21,7 @@ import {
   NFTWithTagsAndIssuer,
 } from "../models/types";
 
+
 export default class AccountService {
   private prisma: PrismaClient;
   private ledger: XrpLedgerAdapter;
@@ -30,11 +31,12 @@ export default class AccountService {
     this.ledger = ledger;
   }
 
+
   getAccountByAccountId = async (
     accountId: number
   ): Promise<
     User & {
-      owned_nft: NFTWithTags[];
+      owned_nft: (NFTWithTags & {auctions: Auction[] })[];
       bid: (Bid & { auction: Auction & { nft: NFTWithTagsAndIssuer } })[];
     }
   > => {
@@ -43,6 +45,14 @@ export default class AccountService {
         owned_nft: {
           include: {
             tags: true,
+            auctions: {
+              take: 1,
+                where: {
+                    status: {
+                      in: [Status.ACTIVE, Status.CALL_FOR_CONFIRM, Status.WON],
+                    }
+                }
+            }
           },
         },
         bid: {

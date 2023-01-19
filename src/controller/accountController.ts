@@ -22,7 +22,7 @@ export default class AccountController {
       .createAccount(createAccountDTO)
       .then((account) => {
         req.login(account, () =>
-          res.status(201).json(MapperUtils.mapUserToAccountResponse(account))
+          res.status(201).json({id: account.id, username: account.email})
         );
       })
       .catch((err) => {

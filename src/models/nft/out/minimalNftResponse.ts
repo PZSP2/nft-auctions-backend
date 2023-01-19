@@ -10,4 +10,8 @@ export default interface MinimalNftResponse {
   readonly isImage: boolean;
 
   readonly tags: string[];
+
+  readonly mintedDate?: Date;
+
+  readonly activeAuctionId?: number;
 }

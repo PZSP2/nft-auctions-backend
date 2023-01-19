@@ -51,8 +51,8 @@ export default class MapperUtils {
 
   static mapUserToAccountResponse(
     user: User & {
-      owned_nft?: NFTWithTags[];
-      bid?: (Bid & { auction: Auction & { nft: NFTWithTagsAndIssuer } })[];
+      owned_nft: (NFTWithTags & {auctions: Auction[] | undefined })[];
+      bid: (Bid & { auction: Auction & { nft: NFTWithTagsAndIssuer } })[];
     }
   ): AccountResponse {
     return {
@@ -65,11 +65,13 @@ export default class MapperUtils {
       email: user.email,
       name: user.name ?? user.email,
       ownedNfts:
-        user.owned_nft?.map((nft) => this.mapNftToMinimalResponse(nft)) ?? [],
+        user.owned_nft?.map((nft) => this.mapNftToMinimalResponse(
+            nft, nft.auctions != undefined ? nft.auctions[0]?.id : undefined
+        )) ?? []
     };
   }
 
-  static mapNftToMinimalResponse(nft: NFTWithTags): MinimalNftResponse {
+  static mapNftToMinimalResponse(nft: NFTWithTags, auctionId?: number): MinimalNftResponse {
     return {
       nftId: nft.id,
       name: nft.name,
@@ -77,6 +79,7 @@ export default class MapperUtils {
       uri: nft.uri,
       isImage: nft.is_image,
       tags: nft.tags.map((tag) => this.mapTagToString(tag)),
+      activeAuctionId: auctionId ?? undefined,
     };
   }
 
@@ -97,9 +100,10 @@ export default class MapperUtils {
       bids?: (Bid & { bidder: User })[];
     }
   ): MinimalAuctionResponse {
-    const winningBid = auction.bids?.reduce((a, b) =>
-      a.timestamp > b.timestamp ? a : b
-    );
+    const winningBid =
+        auction.bids?.length ?? 0 > 0
+            ? auction.bids?.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
+            : undefined;
     return {
       auctionId: auction.id,
       lastBid:
@@ -193,7 +197,7 @@ export default class MapperUtils {
   ): OwnedAuctionUpdates {
     const winningBid =
       auction.bids?.length ?? 0 > 0
-        ? auction.bids?.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
+        ? auction.bids?.reduce((a, b) => (a.timestamp > b.timestamp ? a : b), )
         : undefined;
 
     return {
